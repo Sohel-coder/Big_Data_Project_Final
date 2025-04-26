@@ -10,21 +10,47 @@ def set_bg_image():
     st.markdown(
         f"""
         <style>
-        /* Make the Streamlit app container take the background */
+        /* app background */
         .stApp {{
           background-image: url("https://media.istockphoto.com/id/1287561722/photo/camouflage-cloth-texture-abstract-background-and-texture-for-design.jpg?s=612x612&w=0&k=20&c=MrNR7xi7ZByp3YZkDmDHxcNO6XQzMBM_3MB_Stvc7jw=");
-          background-size: 100% 100%;      /* stretch to exactly fill */
-          background-repeat: no-repeat;   /* no tiling */
-          background-position: center;    /* center alignment */
-          background-attachment: fixed;   /* stay fixed on scroll */
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-position: center;
+          background-attachment: fixed;
         }}
-        /* (optional) make sidebar semi‐transparent so bg shows through */
-        .css-1d391kg {{  /* adjust class if yours differs */
-        background-color: rgba(255,255,255,0.8);
+
+        /* sidebar & main panel transparent */
+        [data-testid="stSidebar"] > div,
+        [data-testid="stAppViewContainer"] .block-container {{
+          background: transparent !important;
+          box-shadow: none !important;
+        }}
+
+        /* widgets (dropdowns, sliders, radios, etc.) */
+        .stSelectbox > div,
+        .stMultiselect > div,
+        .stRadio > div,
+        .stCheckbox > div,
+        .stSlider > div,
+        .stTextInput > div,
+        .stButton > button {{
+          background: rgba(255,255,255,0.2) !important;
+          border: none !important;
+        }}
+
+        /* Plotly/Matplotlib chart containers */
+        div.stPlotlyChart > div,
+        .stGraph svg {{
+          background: transparent !important;
+        }}
+
+        /* DataFrame / table containers */
+        div.stDataFrame > div {{
+          background: transparent !important;
         }}
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 set_bg_image()
