@@ -175,7 +175,7 @@ yr = st.selectbox("Select FY year:", sorted(trade_df['year'].unique()))
 ind = trade_df[(trade_df['country']=='India') & (trade_df['year']==yr)]
 # assume partner column is 'partner'
 sum_ind = (
-    ind.groupby('partner_country').agg({...})
+    ind.groupby('country').agg({...})
        .agg(Imports=('import','sum'), Exports=('export','sum'))
        .assign(Total=lambda d: d.Imports+d.Exports)
        .reset_index()
