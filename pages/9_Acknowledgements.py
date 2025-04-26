@@ -1,18 +1,36 @@
 import streamlit as st
 
-headline = 'Acknowledgements'
 
+st.set_page_config(
+    page_title="Acknowledgements",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Inject custom CSS
 st.markdown(
     """
     <style>
+    /* Full-screen app container with centered native-size background */
     .stApp {
-        background-image: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=');
-        background-attachment: fixed;
-        background-size: cover;
+        background: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=')
+                    no-repeat right center fixed;
+        background-size: contain;  /* show at native resolution, fully visible */
+    }
+
+    /* Make sidebar slightly translucent so the background peeks through */
+    [data-testid="stSidebar"] {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    /* Right-aligned hero text */
+    .css-1lcbmhc {  /* you may need to adjust this selector to match your Streamlit version */
+        text-align: center !important;
+        padding: 1rem 1rem !important;
     }
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 st.title(headline)
