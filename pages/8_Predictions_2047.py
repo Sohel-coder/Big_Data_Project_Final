@@ -7,62 +7,65 @@ import plotly.express as px
 st.set_page_config(page_title="Predictions", layout="wide")
 st.title("🔮 Predicting the Future of Defence (2050)")
 st.markdown("""
-This section projects each country’s Power Index in 2050 using a linear model trained on:
-- Historical Power Index (year → pwr_index)
-- Military strength (personnel, tanks, aircraft, navy)
-- Defence budget (% of GDP)
-- Annual military expenditure (USD)
-- Exports & imports (USD)
-- Conflict counts & impact
+We train a linear model on **2024** data to predict each country’s Power Index in **2050**, 
+using only:
+- **Military strength** (personnel, aircraft, tanks, navy)
+- **Defence budget** (% of GDP)
+- **Annual military expenditure** (USD)
+- **Exports & imports** (USD)
 """)
 
-# — Load data —
+# —— Load Data —— 
 @st.cache_data
-def load_strength():
-    # expects country + year + strength metrics
-    df = pd.read_csv("data/military_data.csv")
-    return df
+def load_data():
+    # 1) Base 2024 strength & pwr_index
+    base = pd.read_csv("data/2024_military_strength_by_country.csv")
+    # Rename columns for clarity
+    base = base.rename(columns={
+        "active_service_military_manpower": "active_personnel",
+        "total_military_aircraft_strength": "total_aircraft",
+        "total_combat_tank_strength": "total_tanks",
+        "navy_strength":            "navy_strength",
+        "pwr_index":                "pwr_index"
+    })
+    # 2) Defence budget % GDP for 2024
+    bud = pd.read_csv("data/Cleaned_Defence_Budget.csv")
+    bud_long = (
+        bud.melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp")
+           .rename(columns={"Country Name":"country"})
+           .assign(year=lambda d: d["year"].astype(int))
+    )
+    bud2024 = bud_long[bud_long["year"]==2024][["country","def_budget_pct_gdp"]]
+    # 3) Military expenditure USD for 2024
+    exp = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
+    exp_long = (
+        exp.melt(id_vars=["Name"], var_name="year", value_name="exp_usd")
+           .rename(columns={"Name":"country"})
+           .assign(year=lambda d: d["year"].astype(int))
+    )
+    exp2024 = exp_long[exp_long["year"]==2024][["country","exp_usd"]]
+    # 4) Exports & imports for 2024
+    trade = pd.read_csv("data/exports_imports_cleaned.csv")
+    trade2024 = trade[trade["year"]==2024][["country","exports_usd","imports_usd"]]
 
-@st.cache_data
-def load_budget():
-    # expects columns: Country Name, <year columns> = % of GDP
-    df = pd.read_csv("data/Cleaned_Defence_Budget.csv")
-    return df.melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp") \
-             .rename(columns={"Country Name":"country"}).assign(year=lambda d: d["year"].astype(int))
+    # Merge all into one DF
+    df = (
+        base.rename(columns={"country":"country"})
+            [["country","active_personnel","total_aircraft","total_tanks","navy_strength","pwr_index"]]
+            .merge(bud2024, on="country", how="left")
+            .merge(exp2024, on="country", how="left")
+            .merge(trade2024, on="country", how="left")
+    )
 
-@st.cache_data
-def load_expenditure():
-    # expects country + year + expenditure USD columns
-    df = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
-    return df.melt(id_vars=["Name"], var_name="year", value_name="exp_usd") \
-             .rename(columns={"Name":"country"}).assign(year=lambda d: d["year"].astype(int))
+    # Drop any missing
+    return df.dropna()
 
-@st.cache_data
-def load_trade():
-    # expects country,year,exports_usd,imports_usd
-    return pd.read_csv("data/exports_imports_cleaned.csv")
+df = load_data()
 
+st.markdown(f"Dataset contains **{len(df)}** countries with complete 2024 data.")
 
-# Load all
-trends_df    = load_power_trends()
-strength_df  = load_strength()
-budget_df    = load_budget()
-exp_df       = load_expenditure()
-trade_df     = load_trade()
-conflict_df  = load_conflicts()
-
-# — Prepare modeling dataset —
-df = trends_df.copy()
-# merge all feature tables on country+year
-for feat in [strength_df, budget_df, exp_df, trade_df, conflict_df]:
-    df = df.merge(feat, on=["country","year"], how="left")
-
-# drop rows with any missing feature
-df = df.dropna()
-
-# features & target
+# —— Prepare & train model —— 
 features = [
-    "year",
     "active_personnel",
     "total_aircraft",
     "total_tanks",
@@ -70,71 +73,56 @@ features = [
     "def_budget_pct_gdp",
     "exp_usd",
     "exports_usd",
-    "imports_usd",
-    "num_conflicts",
-    "impact_score"
+    "imports_usd"
 ]
 X = df[features]
 y = df["pwr_index"]
 
-# train
 model = LinearRegression()
 model.fit(X, y)
 
-# — Forecast for 2050 —
-# take latest available features for each country (e.g. year=2024)
-latest = df[df["year"] == df["year"].max()].copy()
-# override year = 2050
-latest["year"] = 2050
-# predict
-latest["pwr_index_2050"] = model.predict(latest[features])
+# —— Predict for 2050 —— 
+# assume features unchanged from 2024 → predict 2050 index
+df["pwr_index_2050"] = model.predict(X)
 
-# also grab 2024 index
-current = trends_df[trends_df["year"] == trends_df["year"].max()][["country","pwr_index"]]
-compare = current.merge(
-    latest[["country","pwr_index_2050"]],
-    on="country", how="inner"
-).rename(columns={
-    "pwr_index":"Current (2024)",
-    "pwr_index_2050":"Projected (2050)"
-})
-compare = compare.sort_values("Projected (2050)")
-
-# — Show Top 10 Projected Strongest (lowest index) —
+# —— Top 10 strongest (lowest index) in 2050 —— 
 st.header("🏆 Top 10 Countries by Projected Power Index (2050)")
-top10 = compare.head(10)
+top10 = df.nsmallest(10, "pwr_index_2050")[["country","pwr_index_2050"]]
 fig = px.bar(
-    top10, x="country", y="Projected (2050)",
+    top10, x="country", y="pwr_index_2050",
     title="Lower Power Index = Stronger Power",
-    text=top10["Projected (2050)"].round(2),
-    labels={"Projected (2050)":"Projected Power Index (2050)"},
+    text=top10["pwr_index_2050"].round(2),
+    labels={"pwr_index_2050":"Projected Power Index (2050)"},
     template="plotly_white"
 )
 fig.update_traces(textposition="outside")
 fig.update_layout(yaxis={"autorange":"reversed"})
 st.plotly_chart(fig, use_container_width=True)
 
-# — Full Comparison Table —
+# —— Full comparison table —— 
 st.subheader("📋 Current vs Projected Power Index")
+compare = df[["country","pwr_index","pwr_index_2050"]].rename(columns={
+    "pwr_index":"Current (2024)",
+    "pwr_index_2050":"Projected (2050)"
+})
 st.dataframe(compare.round(2), use_container_width=True)
 
-# — Model Coefficients —
-st.subheader("🔍 Feature Influence (Model Coefficients)")
+# —— Feature coefficients —— 
+st.subheader("🔍 Feature Influence (Regression Coefficients)")
 coef_df = pd.DataFrame({
     "feature": features,
     "coefficient": model.coef_
 }).set_index("feature").sort_values("coefficient", ascending=False)
 st.bar_chart(coef_df)
 
-# — Explanation —
+# —— Explanation —— 
 st.markdown("""
 **Why these projections?**  
-The linear model learned that:
-- **Year** has a negative slope: Power Index tends to improve over time.
-- Higher **active personnel** and **aircraft strength** strongly *lower* (improve) the index.
-- **Defence budget (% GDP)** and **expenditure** also drive improvements.
-- **Exports** and **imports** correlate with greater logistical capacity, improving power.
-- Frequent **conflicts** and higher **impact scores** tend to *raise* (weaken) the index.
+- The model learns how each 2024 metric correlates with current Power Index.  
+- We then apply the same relationships to 2050, **holding features constant**.  
+- **Stronger military strength** (more personnel, aircraft, tanks, navy) lowers the Index.  
+- **Higher defence‐budget share** and **greater expenditure** also lower (improve) the Index.  
+- **Exports/imports** reflect logistical and industrial capacity, further improving strength.  
 
-Countries combining **rapidly growing capabilities** with **stable conflict environments** (e.g. low conflict counts) emerge strongest by 2050.
+Since we assume no major shifts in these inputs after 2024, the projected ranking for 2050 simply reflects each country’s **relative 2024 strengths** under this linear model.
 """)
