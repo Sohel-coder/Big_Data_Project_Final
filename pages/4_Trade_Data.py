@@ -31,7 +31,6 @@ st.markdown("""
 /* General Styling */
 body {
     background-color: #F5F5F5; /* Changed to soft gray */
-    font-family: 'Helvetica', sans-serif;
 }
 .stApp {
     max-width: 100%;
