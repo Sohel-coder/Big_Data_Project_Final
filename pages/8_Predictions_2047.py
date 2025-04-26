@@ -37,13 +37,6 @@ def load_and_aggregate():
         value_name="def_budget_pct_gdp"
     )
     bud_long["year"] = bud_long["year"].astype(int)
-    
-        bud_long = (
-            bud
-            .melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp")
-            .rename(columns={"Country Name": "country"})
-        )
-    bud_long["year"] = bud_long["year"].astype(int)
     bud_avg = (
         bud_long
         .query("2005 <= year <= 2018")
