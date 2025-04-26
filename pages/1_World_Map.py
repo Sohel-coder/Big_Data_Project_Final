@@ -19,9 +19,9 @@ def set_bg_image():
           background-attachment: fixed;   /* stay fixed on scroll */
         }}
         /* (optional) make sidebar semi‐transparent so bg shows through */
-        .css-1d391kg {  /* adjust class if yours differs */
-          background-color: rgba(255,255,255,0.8);
-        }
+        .css-1d391kg {{  /* adjust class if yours differs */
+        background-color: rgba(255,255,255,0.8);
+        }}
         </style>
         """,
         unsafe_allow_html=True
