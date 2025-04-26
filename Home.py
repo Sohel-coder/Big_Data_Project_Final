@@ -39,7 +39,7 @@ st.markdown(
     "Explore : <br>"
     "Global defence budgets <br>" 
     "Military strengths <br>"
-    Trade flows and more—all in one place.</p>",
+    Trade flows and more all in one place.</p>",
     
     unsafe_allow_html=True
 )
