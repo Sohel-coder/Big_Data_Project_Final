@@ -24,8 +24,8 @@ st.markdown(
 
     /* Right-aligned hero text */
     .css-1lcbmhc {  /* you may need to adjust this selector to match your Streamlit version */
-        text-align: right !important;
-        padding: 4rem 2rem !important;
+        text-align: center !important;
+        padding: 1rem 1rem !important;
     }
     </style>
     """,
@@ -36,6 +36,10 @@ st.markdown(
 st.markdown("<h1>🎖️ Art of War</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p>Welcome to the Military Data Analysis Platform!<br>"
-    "Explore global defence budgets, military strengths, trade flows, and more—all in one place.</p>",
+    "Explore : <br>"
+    "Global defence budgets <br>" 
+    "Military strengths <br>"
+    Trade flows and more—all in one place.</p>",
+    
     unsafe_allow_html=True
 )
