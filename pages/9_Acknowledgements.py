@@ -6,7 +6,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-image: url('https://media.istockphoto.com/id/1198259138/photo/soldier-in-battle-aiming-laser-sight-optics-glitch.jpg?s=612x612&w=0&k=20&c=d2aXCnOJSdmuOL8FT6vaIkScc-o90IbkegQPL60LXdQ=');
+        background-image: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=');
         background-attachment: fixed;
         background-size: cover;
     }
