@@ -565,10 +565,12 @@ if war:
             render(step)
 
          # ── Outcomes & Impacts ──
+        st.markdown("### 🏁 Outcome")
+        st.write(info['outcome'])
+
         st.markdown("#### 📌 Impacts on Indian Defence")
         for point in impacts_on_india.get(war, []):
-            st.markdown(f"- {point}")st.markdown("### 🏁 Outcome")
-        st.write(info['outcome'])
+            st.markdown(f"- {point}")
 
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
