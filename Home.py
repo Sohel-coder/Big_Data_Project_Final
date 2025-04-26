@@ -1,6 +1,3 @@
-see this image .
-it has this code running behind
-# Home.py
 import streamlit as st
 
 st.set_page_config(page_title="🎖️ Art of War", layout="wide", initial_sidebar_state="collapsed")
