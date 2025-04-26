@@ -140,7 +140,7 @@ if st.session_state.show_popup and st.session_state.popup_content:
     </div>""", unsafe_allow_html=True)
 
 # clear if closed
-st.experimental_set_query_params()  # hack to reset on rerun
+st.query_params()  # hack to reset on rerun
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 📊 Section 2: Top Trading Partners by Year
