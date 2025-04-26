@@ -20,7 +20,8 @@ st.markdown(
 # ─── 3) Simple CSS (align to second page style) ──────────────────────────────────
 st.markdown("""
 <style>
-.stApp { max-width:1200px; margin:0 auto; padding:20px; font-family:Helvetica, sans-serif; }
+.stApp { max-width: 100%; padding: 0 16px; font-family:Helvetica, sans-serif; }
+.element-container { max-width: 100% ;}
 .tab-header { font-size:20px; font-weight:bold; margin-bottom:10px; color:#1E3A8A; }
 .chart-container { background:#F9FAFB; padding:10px; border-radius:8px; }
 </style>
