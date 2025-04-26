@@ -20,7 +20,6 @@ using only:
 def load_data():
     # 1) Base 2024 strength & pwr_index
     base = pd.read_csv("data/2024_military_strength_by_country.csv")
-    # Rename columns for clarity
     base = base.rename(columns={
         "active_service_military_manpower": "active_personnel",
         "total_military_aircraft_strength": "total_aircraft",
@@ -28,40 +27,56 @@ def load_data():
         "navy_strength":            "navy_strength",
         "pwr_index":                "pwr_index"
     })
+
     # 2) Defence budget % GDP for 2024
     bud = pd.read_csv("data/Cleaned_Defence_Budget.csv")
+    # only melt columns whose names are all digits
+    budget_years = [c for c in bud.columns if c.isdigit()]
     bud_long = (
-        bud.melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp")
-           .rename(columns={"Country Name":"country"})
-           .assign(year=lambda d: d["year"].astype(int))
+        bud
+        .melt(
+            id_vars=["Country Name"],
+            value_vars=budget_years,
+            var_name="year",
+            value_name="def_budget_pct_gdp"
+        )
+        .rename(columns={"Country Name":"country"})
     )
+    bud_long["year"] = bud_long["year"].astype(int)
     bud2024 = bud_long[bud_long["year"]==2024][["country","def_budget_pct_gdp"]]
+
     # 3) Military expenditure USD for 2024
     exp = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
+    # assume this sheet only has year columns in YYYY form
+    exp_years = [c for c in exp.columns if str(c).isdigit()]
     exp_long = (
-        exp.melt(id_vars=["Name"], var_name="year", value_name="exp_usd")
-           .rename(columns={"Name":"country"})
-           .assign(year=lambda d: d["year"].astype(int))
+        exp
+        .melt(
+            id_vars=["Name"],
+            value_vars=exp_years,
+            var_name="year",
+            value_name="exp_usd"
+        )
+        .rename(columns={"Name":"country"})
     )
+    exp_long["year"] = exp_long["year"].astype(int)
     exp2024 = exp_long[exp_long["year"]==2024][["country","exp_usd"]]
+
     # 4) Exports & imports for 2024
     trade = pd.read_csv("data/exports_imports_cleaned.csv")
     trade2024 = trade[trade["year"]==2024][["country","exports_usd","imports_usd"]]
 
     # Merge all into one DF
     df = (
-        base.rename(columns={"country":"country"})
-            [["country","active_personnel","total_aircraft","total_tanks","navy_strength","pwr_index"]]
-            .merge(bud2024, on="country", how="left")
-            .merge(exp2024, on="country", how="left")
+        base[["country","active_personnel","total_aircraft","total_tanks","navy_strength","pwr_index"]]
+            .merge(bud2024,   on="country", how="left")
+            .merge(exp2024,   on="country", how="left")
             .merge(trade2024, on="country", how="left")
     )
 
-    # Drop any missing
     return df.dropna()
 
 df = load_data()
-
 st.markdown(f"Dataset contains **{len(df)}** countries with complete 2024 data.")
 
 # —— Prepare & train model —— 
@@ -82,7 +97,6 @@ model = LinearRegression()
 model.fit(X, y)
 
 # —— Predict for 2050 —— 
-# assume features unchanged from 2024 → predict 2050 index
 df["pwr_index_2050"] = model.predict(X)
 
 # —— Top 10 strongest (lowest index) in 2050 —— 
