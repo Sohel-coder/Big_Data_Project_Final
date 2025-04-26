@@ -13,7 +13,7 @@ st.markdown(
     /* Full-screen app container with centered native-size background */
     .stApp {
         background: url('https://media.istockphoto.com/id/1287083951/photo/full-length-portrait-of-an-army-soldier-in-full-military-gear-helmet-glasses-and-mask.jpg?s=612x612&w=0&k=20&c=t7a2Bg6n90dHFZjtpLHxgzl3rVrrdEPL2i9hQZ9rluc=')
-                    no-repeat center center fixed;
+                    no-repeat right center fixed;
         background-size: contain;  /* show at native resolution, fully visible */
     }
 
