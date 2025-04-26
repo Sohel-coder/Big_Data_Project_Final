@@ -379,3 +379,59 @@ if st.session_state['show_trade_popup'] and st.session_state['trade_popup_conten
         st.rerun()
 else:
     st.markdown("<style>.trade-popup-container { display: none; }</style>", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 📊 Section 3: Comparative Analysis – Exports & Imports Over Time
+st.markdown("---")
+st.markdown("### 📊 3. Comparative Analysis: Exports & Imports Over Time")
+
+# Let the user pick multiple countries to compare
+compare_countries = st.multiselect(
+    "Select countries to compare:",
+    options=sorted(trade_df["country"].unique()),
+    default=[selected_country]  # default to the one you first picked
+)
+
+if compare_countries:
+    # Build a small DataFrame with year, country, export & import
+    comp_df = trade_df[trade_df["country"].isin(compare_countries)].copy()
+    comp_df["year"] = comp_df["financial_year(start)"].astype(int)
+
+    # Exports timeline
+    fig_exp = px.line(
+        comp_df,
+        x="year",
+        y="export",
+        color="country",
+        markers=True,
+        title="Exports Over Time",
+        labels={"export": "Exports (Mil USD)", "year": "Year"},
+        template="plotly_white"
+    )
+    fig_exp.update_layout(
+        xaxis=dict(tickmode="linear", tick0=comp_df["year"].min(), dtick=1),
+        yaxis=dict(title_font=dict(color="#333333"), tickfont=dict(color="#333333")),
+        legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig_exp, use_container_width=True)
+
+    # Imports timeline
+    fig_imp = px.line(
+        comp_df,
+        x="year",
+        y="import",
+        color="country",
+        markers=True,
+        title="Imports Over Time",
+        labels={"import": "Imports (Mil USD)", "year": "Year"},
+        template="plotly_white"
+    )
+    fig_imp.update_layout(
+        xaxis=dict(tickmode="linear", tick0=comp_df["year"].min(), dtick=1),
+        yaxis=dict(title_font=dict(color="#333333"), tickfont=dict(color="#333333")),
+        legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig_imp, use_container_width=True)
+else:
+    st.info("Select at least one country above to see its exports/imports timeline.")
+
