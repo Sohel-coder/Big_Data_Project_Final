@@ -336,7 +336,7 @@ if war:
 
     # ── Tabs ──
     tab = st.radio("📂 Select Section:", ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], horizontal=True)
-
+"""
     if tab=="📊 Budget Trends":
         st.subheader(f"📈 Defense Budget Trends Around {war}")
         if 'India' in info['countries']:
@@ -362,6 +362,58 @@ if war:
                 template="plotly_white"
             )
             st.plotly_chart(fig,use_container_width=True)
+        else:
+            st.info("📊 No defense budget data available for this country.")
+"""
+    if tab=="📊 Budget Trends":
+        st.subheader(f"📈 Defense Budget Trends Around {war}")
+
+        # Prepare the same merged DataFrame as before…
+        if 'India' in info['countries']:
+            # … load merged: Year, % of GDP, Expenditure (USD)
+            merged = get_budget_and_expenditure_for_conflict(war)  # your existing logic
+
+            viz = st.radio("Choose visualization:", ["Line", "Scatter", "Box-&-Whisker", "Heatmap"], horizontal=True)
+
+            if viz == "Line":
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(...))    # exactly as you have it
+                fig.add_trace(go.Scatter(..., yaxis="y2"))
+                fig.update_layout(...)  
+                st.plotly_chart(fig, use_container_width=True)
+
+            elif viz == "Scatter":
+                scatter = px.scatter(
+                    merged,
+                    x="% of GDP", y="Expenditure (USD)",
+                    size=None,
+                    color="Year",
+                    trendline="ols",
+                    title="Scatter: %GDP vs USD Spend",
+                    labels={"color":"Year"}
+                )
+                st.plotly_chart(scatter, use_container_width=True)
+
+            elif viz == "Box-&-Whisker":
+                box = px.box(
+                    merged.melt(id_vars="Year", var_name="Metric", value_name="Value"),
+                    x="Metric", y="Value",
+                    points="all",
+                    title="Distribution of Budget Metrics (5-year window)"
+                )
+                st.plotly_chart(box, use_container_width=True)
+
+            else:  # Heatmap
+                hm = merged.set_index("Year").T  # metrics as rows, years as cols
+                heat = px.imshow(
+                    hm,
+                    text_auto=True,
+                    aspect="auto",
+                    labels=dict(x="Year", y="Metric", color="Value"),
+                    title="Heatmap of %GDP vs USD Spend"
+                )
+                st.plotly_chart(heat, use_container_width=True)
+
         else:
             st.info("📊 No defense budget data available for this country.")
 
