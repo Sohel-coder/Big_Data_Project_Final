@@ -33,7 +33,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.title(headline)
 st.markdown("""
 """, unsafe_allow_html=False)
 st.markdown("""
