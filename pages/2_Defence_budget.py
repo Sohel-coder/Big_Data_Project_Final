@@ -127,113 +127,66 @@ with tab2:
         st.plotly_chart(fig2, use_container_width=True)
 
 # --- Tab 3: Decade‐Wise Breakdown ---
-# --- Tab 3: Decade‐Wise Breakdown ---
 with tab3:
     st.header("🕰️ Decade‐Wise Defence Investment Breakdown")
-    country = st.selectbox("Select a country", df["Country Name"].unique())
-    selected = df[df["Country Name"] == country]
+    country = st.selectbox("Select Country", df["Country Name"].unique(), key="tab3_country")
+    sel = df[df["Country Name"]==country]
+    # build sunburst data
+    sun = []
+    # root
+    total = sel[year_columns].sum(axis=1).iloc[0]
+    avg_all = sel[year_columns].mean(axis=1).iloc[0]
+    sun.append(dict(id="1960–2020", label="1960–2020", parent="", Spending=total, ColorMetric=avg_all))
+    # decades & years
+    for start in range(1960, 2020, 10):
+        dec_label = f"{start}s"
+        yrs = [str(y) for y in range(start, start+10)]
+        vals = sel[yrs].sum(axis=1).iloc[0]
+        avg_d = sel[yrs].mean(axis=1).iloc[0]
+        sun.append(dict(id=dec_label, label=dec_label, parent="1960–2020", Spending=vals, ColorMetric=avg_d))
+        for y in yrs:
+            val = sel[y].iloc[0]
+            sun.append(dict(id=y, label=y, parent=dec_label, Spending=val, ColorMetric=val))
+    df_sun = pd.DataFrame(sun)
 
-    # Prepare sunburst data
-    sunburst_data = []
-    root_avg = selected[year_columns].mean(axis=1).values[0]
-    sunburst_data.append({
-        "id": "1960–2020", "label": "1960–2020", "parent": "", "Spending": root_avg
-    })
-
-    for decade_start in range(1960, 2020, 10):
-        decade_label = f"{decade_start}s"
-        years = [str(y) for y in range(decade_start, decade_start + 10)]
-        decade_avg = selected[years].mean(axis=1).values[0]
-        sunburst_data.append({
-            "id": decade_label, "label": decade_label, "parent": "1960–2020", "Spending": decade_avg
-        })
-        for year in years:
-            year_value = selected[year].values[0]
-            sunburst_data.append({
-                "id": year, "label": year, "parent": decade_label, "Spending": year_value
-            })
-
-    df_sunburst = pd.DataFrame(sunburst_data)
-
-    st.subheader(f"🧭 Defense Spending Sunburst (1960–2020) – {country}")
-    fig = px.sunburst(
-    df_sunburst,
-    names="label",
-    parents="parent",
-    values="Spending",
-    color="Spending",
-    color_continuous_scale="Blues",
-    custom_data=["label"]  # 👈 This line makes 'label' available in click events
+    st.subheader(f"Sunburst: {country} (1960–2020)")
+    fig_sb = px.sunburst(
+        df_sun, names="label", parents="parent", values="Spending",
+        color="ColorMetric", color_continuous_scale="Blues", branchvalues="total"
     )
-
-    fig.update_layout(margin=dict(t=10, b=10, l=10, r=10))
-
-    from streamlit_plotly_events import plotly_events
-    selected_event = plotly_events(fig, click_event=True, key="sunburst")
     
-
-
-
-    # Determine year range based on click
-    if selected_event and "customdata" in selected_event[0]:
-        clicked_label = selected_event[0]["customdata"][0]  # 👈 Safely extract the label from the click
-        if clicked_label == "1960–2020":
-            years = [str(y) for y in range(1960, 2021)]
-            title_label = "1960–2020"
-        elif clicked_label.isdigit() and int(clicked_label) % 10 == 0:
-            # Treat as decade start (e.g., 1980, 1990)
-            decade_start = int(clicked_label)
-            years = [str(y) for y in range(decade_start, decade_start + 10)]
-            title_label = f"{decade_start}s"
-        elif clicked_label.isdigit():
-            # Treat as specific year
-            years = [clicked_label]
-            title_label = clicked_label
-    else:
-        # Fallback to full range
-        years = [str(y) for y in range(1960, 2021)]
-        title_label = "1960–2020"
-
+    # 🔥 ONLY SHOW ROOT + DECADES AT FIRST
+    fig_sb.update_traces(maxdepth=1)
     
-    # Prepare radial data
-    trend_df = selected[years].T.reset_index()
-    trend_df.columns = ["Year", "Spending"]
-    trend_df["Year"] = trend_df["Year"].astype(int)
+    fig_sb.update_layout(margin=dict(t=10,b=10,l=10,r=10))
+    st.plotly_chart(fig_sb, use_container_width=True)
 
-    st.markdown(f"### 📊 {title_label} Average: **{trend_df['Spending'].mean():.2f}%** of GDP")
-
-    if trend_df.empty or trend_df["Spending"].isna().all():
-        st.warning(f"⚠️ No valid data available to render radial chart for **{title_label}**.")
+    st.markdown("---")
+    st.subheader("Radial Bar: Year‐wise Spending")
+    decade_opts = ["1960–2020"] + [f"{s}s" for s in range(1960, 2020, 10)]
+    choice = st.selectbox("Choose Decade", decade_opts)
+    if choice=="1960–2020":
+        years = year_columns
     else:
-        st.subheader("🌀 Year-wise Defense Spending (Radial View)")
-        angles = np.linspace(0, 2 * np.pi, len(trend_df), endpoint=False)
-        radii = trend_df["Spending"].values
-        labels = trend_df["Year"].astype(str).tolist()
+        s = int(choice[:4])
+        years = [str(y) for y in range(s, s+10)]
+    trend = sel[years].T.reset_index()
+    trend.columns = ["Year","Spending"]
+    trend["Year"] = trend["Year"].astype(int)
 
-        fig_radial, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
-        bars = ax.bar(angles, radii, width=0.45, bottom=0.0,
-                      color=plt.cm.viridis(radii / max(radii)), edgecolor="black")
+    # radial plot
+    angles = np.linspace(0, 2*np.pi, len(trend), endpoint=False)
+    radii  = trend["Spending"].values
+    fig_r, ax = plt.subplots(figsize=(7,7), subplot_kw=dict(polar=True))
+    bars = ax.bar(angles, radii, width=2*np.pi/len(radii),
+                  color=plt.cm.viridis(radii/radii.max()), edgecolor="black")
+    ax.set_xticks([]); ax.set_yticks([])
+    for a, lbl in zip(angles, trend["Year"].astype(str)):
+        ax.text(a, radii.max()*1.05, lbl, rotation=np.degrees(a),
+                ha='center', va='center', fontsize=8)
+    plt.tight_layout()
+    st.pyplot(fig_r)
+    plt.close()
 
-        ax.set_xticks([])
-        ax.set_yticklabels([])
-
-        for angle, label in zip(angles, labels):
-            ax.plot([angle, angle], [0, max(radii) + 1], color="gray", linewidth=0.5, linestyle="--")
-            rotation = np.degrees(angle)
-            alignment = 'left'
-            if 90 < rotation < 270:
-                rotation += 180
-                alignment = 'right'
-            ax.text(angle, max(radii) + 1.5, label,
-                    rotation=rotation,
-                    ha=alignment,
-                    va='center',
-                    fontsize=9,
-                    rotation_mode='anchor')
-
-        fig_radial.tight_layout()
-        buf = BytesIO()
-        plt.savefig(buf, format="png", bbox_inches="tight")
-        st.image(buf)
-        plt.close()
-
+    avg_dec = trend["Spending"].mean()
+    st.markdown(f"**Average spending in {choice}:** {avg_dec:.2f}% of GDP")
