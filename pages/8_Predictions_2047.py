@@ -27,11 +27,22 @@ remain at their historical averages.
 def load_and_aggregate():
     # 1) Defence budget % GDP 2005–2018
     bud = pd.read_csv("data/Cleaned_Defence_Budget.csv")
-    bud_long = (
-        bud
-        .melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp")
-        .rename(columns={"Country Name": "country"})
+    # identify year‐columns by checking if the column name is all digits
+    year_cols = [c for c in bud.columns if c.isdigit()]
+    
+    bud_long = bud.melt(
+        id_vars=["Country Name"],
+        value_vars=year_cols,
+        var_name="year",
+        value_name="def_budget_pct_gdp"
     )
+    bud_long["year"] = bud_long["year"].astype(int)
+    
+        bud_long = (
+            bud
+            .melt(id_vars=["Country Name"], var_name="year", value_name="def_budget_pct_gdp")
+            .rename(columns={"Country Name": "country"})
+        )
     bud_long["year"] = bud_long["year"].astype(int)
     bud_avg = (
         bud_long
