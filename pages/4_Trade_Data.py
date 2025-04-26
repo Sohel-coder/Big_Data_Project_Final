@@ -5,72 +5,158 @@ import plotly.express as px
 # Custom CSS for popups and styling
 st.markdown("""
 <style>
-.popup-container {
-    background: linear-gradient(135deg, #E6F0FA, #FFFFFF);
-    border-radius: 10px;
-    padding: 20px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-    opacity: 0;
-    animation: fadeIn 0.3s ease-out forwards;
-    font-family: 'Arial', sans-serif;
-}
-.trade-popup-container {
-    background: linear-gradient(135deg, #F0FFF4, #FFFFFF);
-    border-radius: 10px;
-    padding: 20px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-    opacity: 0;
-    animation: fadeIn 0.3s ease-out forwards;
-    font-family: 'Arial', sans-serif;
-}
+/* Animation Definitions */
 @keyframes fadeIn {
-    0% { opacity: 0; transform: translateY(10px); }
+    0% { opacity: 0; transform: translateY(20px); }
     100% { opacity: 1; transform: translateY(0); }
 }
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+@keyframes wave {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* General Styling */
+body {
+    background-color: #F5F5F5; /* Changed to soft gray */
+    font-family: 'Helvetica', sans-serif;
+}
+.stApp {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header and Selection */
+.stHeader {
+    text-align: center;
+    color: #1E3A8A;
+    font-size: 28px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+.stSelectbox {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(90deg, #E6F0FA, #FFFFFF);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out 0.2s backwards;
+}
+.stSelectbox:hover {
+    background: linear-gradient(90deg, #ADD8E6, #E6F0FA);
+}
+
+/* Chart Styling */
+.plotly-chart {
+    margin: 20px auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Popup Containers */
+.popup-container, .trade-popup-container {
+    background: linear-gradient(135deg, #E6F0FA, #FFFFFF);
+    border-radius: 15px;
+    padding: 25px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards, wave 6s infinite;
+    font-family: 'Verdana', sans-serif;
+    position: relative;
+    background-size: 200% 200%;
+}
+.trade-popup-container {
+    background: linear-gradient(135deg, #F0FFF4, #E6FFE6);
+}
+.popup-container::before {
+    content: '📅';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: #1E3A8A;
+    opacity: 0.7;
+}
+.trade-popup-container::before {
+    content: '🌐';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: #1E3A8A;
+    opacity: 0.7;
+}
+
+/* Popup Title and Description */
 .popup-title {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     color: #1E3A8A;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
 }
 .popup-description {
-    font-size: 14px;
-    color: #4B5563;
-    line-height: 1.6;
-}
-.trade-info {
     font-size: 16px;
+    color: #2A4365;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+/* Trade Info */
+.trade-info {
+    font-size: 18px;
     color: #1E3A8A;
     font-weight: bold;
     margin-top: 10px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out 0.3s backwards;
 }
+
+/* Close Button */
 .close-button {
     display: block;
     margin: 20px auto 0;
-    padding: 8px 20px;
-    background-color: #1E3A8A;
+    padding: 12px 30px;
+    background: linear-gradient(90deg, #3B82F6, #60A5FA);
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 25px;
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    animation: pulse 1.5s infinite;
 }
 .close-button:hover {
-    background-color: #1E40AF;
+    background: linear-gradient(90deg, #1E40AF, #3B82F6);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.5);
+}
+
+/* Ensure Popups Are Visible When Active */
+.popup-container.show {
+    display: block !important;
+}
+.trade-popup-container.show {
+    display: block !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # Load data first
-trade_df = pd.read_csv("data/exports_imports_cleaned.csv")
-events_df = pd.read_csv("data/trade_events_updated2.csv", encoding="latin-1")
+trade_df = pd.read_csv(r"C:\Users\ASUS\Desktop\New folder\Big data\Project\exports_imports_cleaned.csv")
+events_df = pd.read_csv(r"C:\Users\ASUS\Desktop\New folder\Big data\Project\trade_events_updated2.csv", encoding="latin-1")
 
 # Initialize session state for both popups and selected year
 if 'show_popup' not in st.session_state:
@@ -156,12 +242,12 @@ if event:
                     'description': event_description
                 }
 
-# Display historical event popup
+# Display historical event popup with dynamic visibility
 if st.session_state['show_popup'] and st.session_state['popup_content']:
     popup_content = st.session_state['popup_content']
     st.markdown(
         f"""
-        <div class='popup-container'>
+        <div class='popup-container show'>
             <div class='popup-title'>Historical Event ({popup_content['year']})</div>
             <div class='popup-description'>{popup_content['description']}</div>
         </div>
@@ -172,9 +258,7 @@ if st.session_state['show_popup'] and st.session_state['popup_content']:
         st.session_state['show_popup'] = False
         st.session_state['popup_content'] = None
         st.rerun()
-
-# Clear historical popup on rerun if not triggered
-if not st.session_state['show_popup']:
+else:
     st.markdown("<style>.popup-container { display: none; }</style>", unsafe_allow_html=True)
 
 # Year selection dropdown
@@ -253,12 +337,12 @@ if bubble_event:
                 'trade_balance': trade_row['trade_balance_billion'].iloc[0]
             }
 
-# Display trade details popup
+# Display trade details popup with dynamic visibility
 if st.session_state['show_trade_popup'] and st.session_state['trade_popup_content']:
     trade_popup_content = st.session_state['trade_popup_content']
     st.markdown(
         f"""
-        <div class='trade-popup-container'>
+        <div class='trade-popup-container show'>
             <div class='popup-title'>Trade Details with {trade_popup_content['country']} (FY {st.session_state['selected_year']})</div>
             <div class='popup-description'>
                 Imports: ${trade_popup_content['imports']}B<br>
@@ -273,7 +357,5 @@ if st.session_state['show_trade_popup'] and st.session_state['trade_popup_conten
         st.session_state['show_trade_popup'] = False
         st.session_state['trade_popup_content'] = None
         st.rerun()
-
-# Clear trade popup on rerun if not triggered
-if not st.session_state['show_trade_popup']:
+else:
     st.markdown("<style>.trade-popup-container { display: none; }</style>", unsafe_allow_html=True)
