@@ -564,13 +564,13 @@ if war:
             txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
             render(step)
 
-         # ── Outcomes & Impacts ──
+        # ── Outcome & Impacts ──
         st.markdown("### 🏁 Outcome")
-        st.write(info['outcome'])
-
+        for line in info['outcome'].split(';'):
+            st.markdown(f"- {line.strip()}")
         st.markdown("#### 📌 Impacts on Indian Defence")
         for point in impacts_on_india.get(war, []):
             st.markdown(f"- {point}")
-
+            
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
