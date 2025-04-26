@@ -155,8 +155,6 @@ with tab3:
         color="ColorMetric", color_continuous_scale="Blues", branchvalues="total"
     )
     
-    # 🔥 ONLY SHOW ROOT + DECADES AT FIRST
-    fig_sb.update_traces(maxdepth=1)
     
     fig_sb.update_layout(margin=dict(t=10,b=10,l=10,r=10))
     st.plotly_chart(fig_sb, use_container_width=True)
