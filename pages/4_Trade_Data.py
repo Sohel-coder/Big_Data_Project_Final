@@ -60,8 +60,8 @@ body { background-color: #F5F5F5; font-family: 'Helvetica', sans-serif; }
 """, unsafe_allow_html=True)
 
 # 3) Load data
-trade_df = pd.read_csv("exports_imports_cleaned.csv")
-events_df = pd.read_csv("trade_events_updated2.csv", encoding="latin-1")
+trade_df = pd.read_csv("data/exports_imports_cleaned.csv")
+events_df = pd.read_csv("data/trade_events_updated2.csv", encoding="latin-1")
 
 # 4) Session state init
 if "show_popup" not in st.session_state:
