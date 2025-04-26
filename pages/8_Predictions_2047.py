@@ -30,12 +30,15 @@ def load_and_aggregate():
     # identify year‐columns by checking if the column name is all digits
     year_cols = [c for c in bud.columns if c.isdigit()]
     
-    bud_long = bud.melt(
+    bud_long = ( bud.melt(
         id_vars=["Country Name"],
-        value_vars=year_cols,
         var_name="year",
         value_name="def_budget_pct_gdp"
     )
+    .rename(columns={"Country Name": "country"})
+    .assign(year=lambda df: df["year"].astype(int))
+    )
+
     bud_long["year"] = bud_long["year"].astype(int)
     bud_avg = (
         bud_long
