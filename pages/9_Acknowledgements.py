@@ -6,7 +6,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-image: url('https://media.istockphoto.com/id/1207452918/photo/silhouette-of-a-solider-saluting-against-the-sunrise-in-a-town-on-the-mediterranean-coast.webp?a=1&b=1&s=612x612&w=0&k=20&c=QNUnuXGNKBX0Va0GmmuBIFPIOcfZOvIZq7yDRbYpNhs=');
+        background-image: url('https://images.unsplash.com/photo-1567083370726-198ccd78fa0e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8YWNrbm93bGRlZ2VtbnR8ZW58MHx8MHx8fDA%3D');
         background-attachment: fixed;
         background-size: cover;
     }
