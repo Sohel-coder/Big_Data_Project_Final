@@ -114,27 +114,34 @@ fig.update_traces(
 )
 
 fig.update_layout(
+    template="plotly_white",
     font=dict(family="Helvetica", size=14, color="#333333"),
-    title=dict(font=dict(size=24, color="#1E3A8A")),
+    title_text=f"Trade Balance Trend for {country}",
+    title_font=dict(size=24, color="#1E3A8A"),
     xaxis=dict(
-        title=dict(text="Year", font=dict(size=16, color="#555555")),
+        title_text="Year",
+        title_font=dict(size=16, color="#555555"),
         tickfont=dict(size=12, color="#333333"),
         gridcolor="#EEEEEE",
-        zerolinecolor="#DDDDDD"
+        zerolinecolor="#DDDDDD",
     ),
     yaxis=dict(
-        title=dict(text="Trade Balance (Mil USD)", font=dict(size=16, color="#555555")),
+        title_text="Trade Balance (Mil USD)",
+        title_font=dict(size=16, color="#555555"),
         tickfont=dict(size=12, color="#333333"),
         gridcolor="#EEEEEE",
-        zerolinecolor="#DDDDDD"
+        zerolinecolor="#DDDDDD",
     ),
-    margin=dict(l=60, r=30, t=80, b=50),
-    coloraxis_colorbar=dict(
-        title="Balance",
-        tickfont=dict(size=12, color="#333333"),
-        titlefont=dict(size=14, color="#333333")
-    )
+    margin=dict(l=60, r=30, t=80, b=50)
 )
+
+# If you want a styled colorbar:
+fig.update_coloraxes(
+    colorbar_title_text="Balance",
+    colorbar_tickfont=dict(size=12, color="#333333"),
+    colorbar_title_font=dict(size=14, color="#333333")
+)
+
 st.plotly_chart(fig, use_container_width=True)
 evt = st.plotly_chart(fig, use_container_width=True, on_select="rerun")
 
@@ -204,21 +211,25 @@ fig2.update_traces(
 )
 
 fig2.update_layout(
+    template="plotly_white",
     font=dict(family="Helvetica", size=14, color="#333333"),
-    title=dict(font=dict(size=24, color="#1E3A8A")),
+    title_text=f"Top 6 Trading Partners (FY {year})",
+    title_font=dict(size=24, color="#1E3A8A"),
     xaxis=dict(
-        title=dict(text="Country", font=dict(size=16, color="#555555")),
+        title_text="Country",
+        title_font=dict(size=16, color="#555555"),
         tickfont=dict(size=12, color="#333333")
     ),
     yaxis=dict(
-        title=dict(text="Total Trade (Billion USD)", font=dict(size=16, color="#555555")),
+        title_text="Total Trade (Billion USD)",
+        title_font=dict(size=16, color="#555555"),
         tickfont=dict(size=12, color="#333333"),
         gridcolor="#EEEEEE",
         zerolinecolor="#DDDDDD"
     ),
-    margin=dict(l=60, r=30, t=80, b=50),
-    showlegend=False
+    margin=dict(l=60, r=30, t=80, b=50)
 )
+
 
 st.plotly_chart(fig2, use_container_width=True)
 evt2 = st.plotly_chart(fig2, use_container_width=True, on_select="rerun")
