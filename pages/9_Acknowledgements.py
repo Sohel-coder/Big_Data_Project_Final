@@ -19,7 +19,8 @@ st.title(headline)
 st.markdown("""
 """, unsafe_allow_html=False)
 st.markdown("""
-**The success of this project is attributed to the dedication, expertise, and collaborative efforts of all the team members of Group 8**
+**The success of this project is attributed to the dedication, expertise, 
+and collaborative efforts of all the team members of Group 8**
 """, unsafe_allow_html=False)
 
 st.markdown("""
