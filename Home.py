@@ -8,7 +8,7 @@ st.markdown("""
     <style>
     /* Full-screen background */
     .stApp {
-        background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpN7XG4c4UP4mMeidO0JecXCnexjfgmMNqVw&s')
+        background: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=')
                     no-repeat center center fixed;
         background-size: cover;
     }
