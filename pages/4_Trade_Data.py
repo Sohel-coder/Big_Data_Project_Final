@@ -227,6 +227,15 @@ fig.update_layout(
     showlegend=False
 )
 
+fig.update_layout(
+    coloraxis_colorbar=dict(
+        title="Trade Balance (Mil USD)",
+        title_font=dict(color="#333333"),
+        tickfont=dict(color="#333333")
+    )
+)
+
+
 # Render bar chart with click event capture
 event = st.plotly_chart(fig, use_container_width=True, key="trade_balance_chart", on_select="rerun")
 
