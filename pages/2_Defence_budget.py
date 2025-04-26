@@ -127,60 +127,111 @@ with tab2:
         st.plotly_chart(fig2, use_container_width=True)
 
 # --- Tab 3: Decade‐Wise Breakdown ---
+# --- Tab 3: Decade‐Wise Breakdown ---
 with tab3:
     st.header("🕰️ Decade‐Wise Defence Investment Breakdown")
     country = st.selectbox("Select Country", df["Country Name"].unique(), key="tab3_country")
     sel = df[df["Country Name"]==country]
-    # build sunburst data
+
+    # Build sunburst data
     sun = []
-    # root
+    # Root node
     total = sel[year_columns].sum(axis=1).iloc[0]
     avg_all = sel[year_columns].mean(axis=1).iloc[0]
-    sun.append(dict(id="1960–2020", label="1960–2020", parent="", Spending=total, ColorMetric=avg_all))
-    # decades & years
+    sun.append(dict(
+        id="1960–2020",
+        label="1960–2020",
+        parent="",
+        Spending=total,
+        ColorMetric=avg_all
+    ))
+
+    # Decades + years
     for start in range(1960, 2020, 10):
         dec_label = f"{start}s"
         yrs = [str(y) for y in range(start, start+10)]
         vals = sel[yrs].sum(axis=1).iloc[0]
         avg_d = sel[yrs].mean(axis=1).iloc[0]
-        sun.append(dict(id=dec_label, label=dec_label, parent="1960–2020", Spending=vals, ColorMetric=avg_d))
+        # Decade slice
+        sun.append(dict(
+            id=dec_label,
+            label=dec_label,
+            parent="1960–2020",
+            Spending=vals,
+            ColorMetric=avg_d
+        ))
+        # Individual years (will be hidden until drilldown)
         for y in yrs:
-            val = sel[y].iloc[0]
-            sun.append(dict(id=y, label=y, parent=dec_label, Spending=val, ColorMetric=val))
+            year_val = sel[y].iloc[0]
+            sun.append(dict(
+                id=str(y),
+                label=str(y),
+                parent=dec_label,
+                Spending=year_val,
+                ColorMetric=year_val
+            ))
+
     df_sun = pd.DataFrame(sun)
 
     st.subheader(f"Sunburst: {country} (1960–2020)")
     fig_sb = px.sunburst(
-        df_sun, names="label", parents="parent", values="Spending",
-        color="ColorMetric", color_continuous_scale="Blues", branchvalues="total"
+        df_sun,
+        names="label",
+        parents="parent",
+        values="Spending",
+        color="ColorMetric",
+        color_continuous_scale="Blues",
+        branchvalues="total"
     )
-    
-    fig_sb.update_layout(margin=dict(t=10,b=10,l=10,r=10))
+
+    # 🔥 ONLY SHOW ROOT + DECADES AT FIRST
+    fig_sb.update_traces(maxdepth=1)
+
+    fig_sb.update_layout(
+        margin=dict(t=10, b=10, l=10, r=10)
+    )
     st.plotly_chart(fig_sb, use_container_width=True)
 
     st.markdown("---")
     st.subheader("Radial Bar: Year‐wise Spending")
     decade_opts = ["1960–2020"] + [f"{s}s" for s in range(1960, 2020, 10)]
     choice = st.selectbox("Choose Decade", decade_opts)
-    if choice=="1960–2020":
+    if choice == "1960–2020":
         years = year_columns
     else:
         s = int(choice[:4])
         years = [str(y) for y in range(s, s+10)]
+
     trend = sel[years].T.reset_index()
-    trend.columns = ["Year","Spending"]
+    trend.columns = ["Year", "Spending"]
     trend["Year"] = trend["Year"].astype(int)
 
-    # radial plot
+    # Radial bar chart
     angles = np.linspace(0, 2*np.pi, len(trend), endpoint=False)
-    radii  = trend["Spending"].values
-    fig_r, ax = plt.subplots(figsize=(7,7), subplot_kw=dict(polar=True))
-    bars = ax.bar(angles, radii, width=2*np.pi/len(radii),
-                  color=plt.cm.viridis(radii/radii.max()), edgecolor="black")
-    ax.set_xticks([]); ax.set_yticks([])
+    radii = trend["Spending"].values
+    fig_r, ax = plt.subplots(
+        figsize=(7, 7),
+        subplot_kw=dict(polar=True)
+    )
+    bars = ax.bar(
+        angles,
+        radii,
+        width=2*np.pi/len(radii),
+        color=plt.cm.viridis(radii/radii.max()),
+        edgecolor="black"
+    )
+    ax.set_xticks([])
+    ax.set_yticks([])
     for a, lbl in zip(angles, trend["Year"].astype(str)):
-        ax.text(a, radii.max()*1.05, lbl, rotation=np.degrees(a),
-                ha='center', va='center', fontsize=8)
+        ax.text(
+            a,
+            radii.max() * 1.05,
+            lbl,
+            rotation=np.degrees(a),
+            ha='center',
+            va='center',
+            fontsize=8
+        )
     plt.tight_layout()
     st.pyplot(fig_r)
     plt.close()
