@@ -1,108 +1,202 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import seaborn as sns
 
-st.set_page_config(page_title="Defense Companies Analysis", layout="wide")
+st.set_page_config(page_title="Defense Revenue Insights", layout="wide")
 
-st.title("Defense Companies Analysis")
-st.markdown(
-    """
-    This section provides insights into the world's leading defense companies, their revenue trends,
-    and market positions over time.
-    """
-)
-
-
-# Load defense companies dataset
+# Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/defence_companies_from_2005_final.csv")
+    return pd.read_csv("updated_defense_companies_2005_2020.csv")  # Update path if needed
 
-defense_companies = load_data()
+df = load_data()
 
-st.markdown(
-    """
-    This section provides insights into the world's leading defense companies, their revenue trends, 
-    and market positions over time.
-    """
+st.title("💼 Defense Companies Analysis (2005–2020)")
+
+# Sidebar filters
+st.sidebar.header("🔎 Filters")
+years = sorted(df["Year"].unique())
+year_selected = st.sidebar.selectbox("Select Year", years, index=len(years)-1)
+top_n = st.sidebar.slider("Top N Companies", min_value=5, max_value=30, value=10)
+all_companies = sorted(df["Company"].unique())
+selected_companies = st.sidebar.multiselect("Select Companies for Trend", all_companies)
+
+# Filter dataset
+df_filtered = df[df["Year"] == year_selected]
+
+######################################################################################################################
+
+# 1. Top N Companies by Defense Revenue
+st.subheader(f"🎞️ Animated Top {top_n} Companies by Defense Revenue (2005–2020)")
+
+# Filter top N companies per year
+top_over_time = (
+    df.groupby("Year")
+    .apply(lambda x: x.nlargest(top_n, "Defense_Revenue_From_A_Year_Ago"))
+    .reset_index(drop=True)
 )
 
-try:
-    # Most recent data
-    latest_year = defense_companies['Year'].max()
-    latest_data = defense_companies[defense_companies['Year'] == latest_year]
+# Determine max value to fix x-axis
+max_revenue = df["Defense_Revenue_From_A_Year_Ago"].max()
 
-    # Selection
-    st.subheader("Select Companies for Analysis")
-    companies = sorted(defense_companies['Company'].unique())
-    countries = sorted(defense_companies['Country'].unique())
-    col1, col2 = st.columns(2)
-    with col1:
-        selected_companies = st.multiselect(
-            "Select companies:", options=companies,
-            default=latest_data.nlargest(3, 'Defense_Revenue_From_A_Year_Ago')['Company'].tolist()
-        )
-    with col2:
-        selected_countries = st.multiselect(
-            "Filter by country:", options=countries, default=[]
-        )
-    # Filter
-    data = defense_companies.copy()
-    if selected_companies:
-        data = data[data['Company'].isin(selected_companies)]
-    if selected_countries:
-        data = data[data['Country'].isin(selected_countries)]
+fig_top_animated = px.bar(
+    top_over_time,
+    x="Defense_Revenue_From_A_Year_Ago",
+    y="Company",
+    color="Country",
+    animation_frame="Year",
+    orientation="h",
+    title=f"Top {top_n} Defense Companies from 2005 to 2020",
+    labels={"Defense_Revenue_From_A_Year_Ago": "Defense Revenue"},
+    height=600
+)
 
-    if data.empty:
-        st.warning("No data for selected criteria.")
-    else:
-        # Tabs
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "Revenue Analysis", "Historical Trends", "Geographic Distribution", "Defense Revenue Share"
-        ])
+fig_top_animated.update_layout(
+    xaxis=dict(range=[0, max_revenue]),  # 👈 Fixed X-axis
+    yaxis={'categoryorder': 'total ascending'},
+    margin=dict(t=40, l=0, r=0, b=0),
+)
 
-        with tab1:
-            top10 = latest_data if not selected_companies else latest_data[latest_data['Company'].isin(selected_companies)]
-            fig = px.bar(
-                top10, x='Defense_Revenue_From_A_Year_Ago', y='Company', orientation='h',
-                color='Country', title=f'Defense Revenue by Company ({latest_year})'
-            )
-            st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig_top_animated, use_container_width=True)
 
-        with tab2:
-            fig = px.line(
-                data, x='Year', y='Defense_Revenue_From_A_Year_Ago',
-                color='Company', title='Historical Revenue Trends'
-            )
-            st.plotly_chart(fig, use_container_width=True)
 
-        with tab3:
-            geo = latest_data.groupby('Country')['Defense_Revenue_From_A_Year_Ago'].sum().reset_index()
-            fig = px.pie(
-                geo, values='Defense_Revenue_From_A_Year_Ago', names='Country',
-                title='Geographic Distribution of Defense Revenue'
-            )
-            st.plotly_chart(fig, use_container_width=True)
 
-        with tab4:
-            fig = px.scatter(
-                latest_data, x='Total Revenue', y='Defense_Revenue_From_A_Year_Ago',
-                size='%of Revenue from Defence', color='Country', hover_name='Company',
-                title='Defense vs Total Revenue Share'
-            )
-            st.plotly_chart(fig, use_container_width=True)
+######################################################################################################################
 
-        # Company-specific metrics
-        if selected_companies:
-            st.subheader("Company-Specific Metrics")
-            cols = st.columns(min(len(selected_companies), 3))
-            for i, comp in enumerate(selected_companies):
-                row = latest_data[latest_data['Company']==comp].iloc[0]
-                with cols[i]:
-                    st.metric(comp, f"${row['Defense_Revenue_From_A_Year_Ago']:,.0f}M",
-                              f"{row['%of Revenue from Defence']:.1f}% of total")
-                    st.write(f"Country: {row['Country']}")
+# 2. Defense Revenue Trend Over Years
+st.subheader("📈 Defense Revenue Trend (2005–2020)")
 
-except Exception as e:
-    st.error(f"Error loading defense companies data: {e}")
+if selected_companies:
+    trend_df = df[df["Company"].isin(selected_companies)]
+else:
+    trend_df = df[df["Company"].isin(top_over_time["Company"])]
+
+fig_trend = px.line(
+    trend_df,
+    x="Year",
+    y="Defense_Revenue_From_A_Year_Ago",
+    color="Company",
+    markers=True,
+    title="Defense Revenue Trend Over Time",
+    labels={"Defense_Revenue_From_A_Year_Ago": "Defense Revenue"},
+)
+st.plotly_chart(fig_trend, use_container_width=True)
+
+######################################################################################################################
+
+# 3. Sunburst Chart (Filtered by Top Countries and Companies)
+st.subheader("🌞 Interactive Sunburst: Country → Company")
+
+col1, col2 = st.columns(2)
+with col1:
+    num_countries = st.number_input("Number of Top Countries", min_value=1, max_value=20, value=5)
+with col2:
+    num_companies = st.number_input("Number of Top Companies per Country", min_value=1, max_value=20, value=3)
+
+# Step 1: Get top N countries by total defense revenue
+top_countries = (
+    df_filtered.groupby("Country")["Defense_Revenue_From_A_Year_Ago"]
+    .sum()
+    .nlargest(num_countries)
+    .index
+)
+
+filtered_country_df = df_filtered[df_filtered["Country"].isin(top_countries)]
+
+# Step 2: For each country, get top K companies by defense revenue
+sunburst_data = (
+    filtered_country_df.groupby(["Country", "Company"])["Defense_Revenue_From_A_Year_Ago"]
+    .sum()
+    .reset_index()
+)
+
+top_company_entries = sunburst_data.groupby("Country").apply(
+    lambda x: x.nlargest(num_companies, "Defense_Revenue_From_A_Year_Ago")
+).reset_index(drop=True)
+
+# Step 3: Add a "World" level for full-circle path logic
+top_company_entries["World"] = "World"
+
+# Step 4: Create a Sunburst chart with limited initial depth
+fig_sunburst = px.sunburst(
+    top_company_entries,
+    path=["World", "Country", "Company"],
+    values="Defense_Revenue_From_A_Year_Ago",
+    color="Country",
+    title="Top Countries and Leading Defense Companies (Sunburst)",
+    maxdepth=2  # 👈 This ensures only Country level is visible at first
+)
+
+# Optional: Layout tweaks (for margin and colors)
+fig_sunburst.update_layout(
+    margin=dict(t=40, l=0, r=0, b=0),
+    sunburstcolorway=px.colors.qualitative.Pastel,
+    extendsunburstcolors=True,
+)
+
+# Show the chart
+st.plotly_chart(fig_sunburst, use_container_width=True)
+
+
+
+######################################################################################################################################
+
+#4. Animated Bubble chart
+
+st.subheader("🎥 Animated Bubble Chart: Company Revenue Evolution (2005–2020)")
+
+# Optional: Let user choose number of top companies to display over time
+top_n_bubble = st.slider("Top N Companies per Year (for animation)", 5, 30, 15)
+
+# Prepare data: pick top N companies per year by defense revenue
+animated_df = (
+    df.groupby(["Year", "Company", "Country"], as_index=False)
+    .agg({
+        "Defense_Revenue_From_A_Year_Ago": "sum",
+        "Total Revenue": "sum",
+        "%of Revenue from Defence": "mean"
+    })
+)
+
+# Get top N companies for each year
+animated_df["rank"] = animated_df.groupby("Year")["Defense_Revenue_From_A_Year_Ago"].rank("dense", ascending=False)
+animated_df = animated_df[animated_df["rank"] <= top_n_bubble]
+
+# Bubble chart with animation
+fig_bubble = px.scatter(
+    animated_df,
+    x="Total Revenue",
+    y="Defense_Revenue_From_A_Year_Ago",
+    animation_frame="Year",
+    animation_group="Company",
+    size="%of Revenue from Defence",
+    color="Country",
+    hover_name="Company",
+    size_max=60,
+    title="Company Evolution Over Time (2005–2020)",
+    labels={
+        "Defense_Revenue_From_A_Year_Ago": "Defense Revenue",
+        "Total Revenue": "Total Revenue",
+        "%of Revenue from Defence": "% from Defense"
+    }
+)
+
+fig_bubble.update_layout(margin=dict(t=40, l=0, r=0, b=0))
+st.plotly_chart(fig_bubble, use_container_width=True)
+
+
+
+
+######################################################################################################################
+
+
+
+# 5. Expandable Raw Data
+with st.expander("📄 View Raw Data"):
+    st.dataframe(df_filtered)
+
+# Footer
+st.markdown("""
+---
+🔍 Built with Streamlit & Plotly • Interactive Defense Revenue Insights
+""")
