@@ -1,64 +1,41 @@
 import streamlit as st
 
-st.set_page_config(page_title="🎖️ Art of War", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="🎖️ Art of War",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # Inject custom CSS
-st.markdown("""
+st.markdown(
+    """
     <style>
-    /* Full-screen background */
+    /* Full-screen app container with centered native-size background */
     .stApp {
         background: url('https://media.istockphoto.com/id/1287083951/photo/full-length-portrait-of-an-army-soldier-in-full-military-gear-helmet-glasses-and-mask.jpg?s=612x612&w=0&k=20&c=t7a2Bg6n90dHFZjtpLHxgzl3rVrrdEPL2i9hQZ9rluc=')
                     no-repeat center center fixed;
-        background-size: cover;
+        background-size: contain;  /* show at native resolution, fully visible */
     }
-    /* Title styling */
-    .welcome-title {
-        color: #FFD700;
-        font-size: 4rem;
-        font-weight: 700;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-        margin-bottom: 1rem;
+
+    /* Make sidebar slightly translucent so the background peeks through */
+    [data-testid="stSidebar"] {
+        background-color: rgba(0, 0, 0, 0.6);
     }
-    /* Subtitle styling */
-    .welcome-subtitle {
-        color: #EEE;
-        font-size: 1.2rem;
-        line-height: 1.6;
-        margin-bottom: 2rem;
-    }
-    /* Navigation list styling */
-    .nav-list {
-        list-style: none;
-        padding-left: 0;
-    }
-    .nav-list li {
-        margin: 0.5rem 0;
-        font-size: 1.1rem;
-        color: #FFF;
-        padding-left: 1.5rem;
-        position: relative;
-    }
-    .nav-list li:before {
-        content: "⚔️";
-        position: absolute;
-        left: 0;
-    }
-    .nav-list li:hover {
-        color: #FFD700;
-        cursor: pointer;
+
+    /* Right-aligned hero text */
+    .css-1lcbmhc {  /* you may need to adjust this selector to match your Streamlit version */
+        text-align: right !important;
+        padding: 4rem 2rem !important;
     }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-# Overlay div
-st.markdown('<div class="overlay"></div>', unsafe_allow_html=True)
-
-# Content
-st.markdown('<div style="text-align:right; padding: 4rem 2rem;">', unsafe_allow_html=True)
-st.markdown('<h1 class="welcome-title">🎖️ Art of War</h1>', unsafe_allow_html=True)
-st.markdown('<p class="welcome-subtitle">'
-            'Welcome to the Military Data Analysis Platform!<br>'
-            'Explore global defence budgets, military strengths, trade flows, and more—all in one place.'
-            '</p>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
+# Your rest of Home.py content…
+st.markdown("<h1>🎖️ Art of War</h1>", unsafe_allow_html=True)
+st.markdown(
+    "<p>Welcome to the Military Data Analysis Platform!<br>"
+    "Explore global defence budgets, military strengths, trade flows, and more—all in one place.</p>",
+    unsafe_allow_html=True
+)
