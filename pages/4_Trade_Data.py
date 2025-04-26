@@ -2,6 +2,13 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+st.set_page_config(page_title="Trade Balance Analysis", layout="wide")
+st.title("Trade Balance Analysis")
+st.markdown(
+    """
+    This section provides insights into the trade balance of various countries, focusing on India's trade partners and historical events.
+    """
+)
 # Custom CSS for popups and styling
 st.markdown("""
 <style>
