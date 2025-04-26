@@ -35,7 +35,7 @@ README.md          # Project documentation
    ```
 3. Run the home page:
    ```
-   streamlit run home.py
+   streamlit run Home.py
    ```
 4. Use the sidebar to navigate between pages.
 
