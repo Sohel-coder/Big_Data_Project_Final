@@ -20,30 +20,33 @@ st.markdown("""
 /* Fade-in */
 @keyframes fadeIn {0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
 
-/* Pop-up containers */
+/* Pop-up containers (in-flow, centered under chart) */
 .popup-container, .trade-popup-container {
-  position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
   background: #fff;
   border-radius: 12px;
   padding: 24px;
   max-width: 420px;
   width: 90%;
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  margin: 20px auto;            /* center horizontally, in-flow */
   animation: fadeIn 0.4s ease-out;
-  z-index: 9999;
 }
+
 /* Distinct backgrounds */
 .popup-container {background: linear-gradient(135deg,#E6F0FA,#FFFFFF);}
 .trade-popup-container {background: linear-gradient(135deg,#F0FFF4,#E6FFE6);}
 
 /* Icons */
 .popup-container::before, .trade-popup-container::before {
-  position: absolute; top:12px; left:12px; font-size:24px; opacity:0.7;
+  content: '';
+  position: absolute; /* you'll need to add position: relative on the container */
+  top: 12px; left: 12px;
+  font-size: 24px; opacity: 0.7;
 }
-.popup-container::before {content:'📅';}
-.trade-popup-container::before {content:'🌐';}
+.popup-container { position: relative; }
+.popup-container::before { content: '📅'; }
+.trade-popup-container { position: relative; }
+.trade-popup-container::before { content: '🌐'; }
 
 /* Title & text */
 .popup-title {
