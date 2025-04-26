@@ -9,3 +9,4 @@ plotly
 pydeck
 country_converter
 geopy
+openpyxl
