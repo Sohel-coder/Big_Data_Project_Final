@@ -13,11 +13,11 @@ st.markdown(
     <style>
     /* Full-screen app container with centered native-size background */
     .stApp {
-        background: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=')
-                    no-repeat right center fixed;
-        background-size: contain;  /* show at native resolution, fully visible */
+        background-image: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=');
+        background-attachment: fixed;
+        background-size: cover;
     }
-
+    
     /* Make sidebar slightly translucent so the background peeks through */
     [data-testid="stSidebar"] {
         background-color: rgba(0, 0, 0, 0.6);
