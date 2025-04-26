@@ -6,6 +6,30 @@ import country_converter as coco
 
 st.set_page_config(page_title="World Map", layout="wide")
 
+def set_bg_image():
+    st.markdown(
+        f"""
+        <style>
+        /* Make the Streamlit app container take the background */
+        .stApp {{
+          background-image: url("https://media.istockphoto.com/id/1287561722/photo/camouflage-cloth-texture-abstract-background-and-texture-for-design.jpg?s=612x612&w=0&k=20&c=MrNR7xi7ZByp3YZkDmDHxcNO6XQzMBM_3MB_Stvc7jw=");
+          background-size: 100% 100%;      /* stretch to exactly fill */
+          background-repeat: no-repeat;   /* no tiling */
+          background-position: center;    /* center alignment */
+          background-attachment: fixed;   /* stay fixed on scroll */
+        }}
+        /* (optional) make sidebar semi‐transparent so bg shows through */
+        .css-1d391kg {  /* adjust class if yours differs */
+          background-color: rgba(255,255,255,0.8);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+set_bg_image()
+
+
 # --- Load Data ---
 @st.cache_data
 def load_data():
