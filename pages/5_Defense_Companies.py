@@ -7,7 +7,7 @@ st.set_page_config(page_title="Defense Revenue Insights", layout="wide")
 # Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/defence_companies_2005_final.csv")  # Update path if needed
+    return pd.read_csv("data/updated_defense_companies_2005_2020.csv")  # Update path if needed
 
 df = load_data()
 
