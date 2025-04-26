@@ -297,6 +297,54 @@ conflict_images = {
     "URI Surgical Strike (2016)": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlIuLBCYsRDE0JUheLF06tCBaFxja3MpLhvQ&s"
 }
 
+# --- Impacts on Indian Defence ---
+impacts_on_india = {
+    'Indo-China War (1962)': [
+        'Overhauled mountain warfare capabilities and created specialized high-altitude units',
+        'Accelerated border infrastructure & forward airfield development',
+        'Modernized Army doctrine for border defense'
+    ],
+    'Indo-Pakistan War (1965)': [
+        'Reformed armoured & mechanized forces',
+        'Increased defence budget and artillery modernization',
+        'Enhanced joint operations and command structures'
+    ],
+    'Six-Day War (1967)': [
+        'Incorporated lessons on preemptive air-strikes and integrated air-land operations',
+        'Upgraded IAF planning for rapid mobilization'
+    ],
+    'Indo-Pakistan War (1971)': [
+        'Validated joint amphibious and riverine assault doctrine',
+        'Expanded Navy capabilities and indigenous shipbuilding',
+        'Improved integrated logistics and special operations'
+    ],
+    'Soviet-Afghan War (1979-1989)': [
+        'Enhanced counter-insurgency & mountain warfare training',
+        'Upgraded equipment for high-altitude operations'
+    ],
+    'Gulf War (1990-1991)': [
+        'Influenced procurement of precision-guided munitions & AWACS',
+        'Modernized IAF strike capabilities based on coalition air power lessons'
+    ],
+    'Kargil War (1999)': [
+        'Led to creation of Mountain Strike Corps',
+        'Boosted surveillance with UAVs & sensors',
+        'Reformed tri-service coordination following Kargil Review'
+    ],
+    'Afghanistan War (2001-2021)': [
+        'Reinforced counter-terrorism & stabilization doctrines',
+        'Expanded Indian Army’s expeditionary logistics support'
+    ],
+    'Iraq War (2003-2011)': [
+        'Adopted expeditionary air ops and C4ISR improvements',
+        'Upgraded IAF’s long-range strike planning'
+    ],
+    'URI Surgical Strike (2016)': [
+        'Spurred expansion of special forces & helicopter-borne strike units',
+        'Accelerated development of cross-border precision-strike capability',
+        'Enhanced real-time surveillance and targeting'
+    ]
+}
 
 # --- User Interaction ---
 regions = sorted({c['region'] for c in conflicts.values()})
@@ -516,7 +564,10 @@ if war:
             txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
             render(step)
 
-        st.markdown("### 🏁 Outcome")
+         # ── Outcomes & Impacts ──
+        st.markdown("#### 📌 Impacts on Indian Defence")
+        for point in impacts_on_india.get(war, []):
+            st.markdown(f"- {point}")st.markdown("### 🏁 Outcome")
         st.write(info['outcome'])
 
 st.markdown("---")
