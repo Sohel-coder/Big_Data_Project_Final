@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import json
 import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
@@ -7,16 +8,14 @@ import numpy as np
 import time
 from geopy.geocoders import Nominatim
 
-st.set_page_config(page_title="Military Conflicts", layout="wide") 
+st.set_page_config(page_title="Military Conflicts", layout="wide")
 st.title("🛡️ Global Military Conflicts Dashboard (1960–2020)")
 
-st.markdown(
-    """
-    This dashboard provides an overview of major military conflicts from 1960 to 2020, including their locations, troop movements, and outcomes.
-    Use the sidebar to navigate through different conflicts and explore their details.
-    """
-)
-
+st.markdown("""
+This dashboard provides an overview of major military conflicts from 1960 to 2020,
+including their locations, troop movements, and outcomes.
+Use the sidebar to navigate through different conflicts and explore their details.
+""")
 
 @st.cache_data
 def get_location_name(lat: float, lon: float) -> str:
@@ -24,264 +23,25 @@ def get_location_name(lat: float, lon: float) -> str:
     loc = geolocator.reverse((lat, lon), language="en")
     return loc.address if loc else f"{lat:.2f}, {lon:.2f}"
 
-
-# --- Load Data ---
 @st.cache_data
-def load_data():
+def load_conflicts():
+    df = pd.read_csv("data/all_conflicts.csv")
+    # parse JSON fields
+    df["location"] = df["location"].apply(json.loads)
+    df["events_timeline"] = df["events_timeline"].apply(json.loads)
+    df["troop_movements"] = df["troop_movements"].apply(json.loads)
+    df["military_strength"] = df["military_strength"].apply(json.loads)
+    df["countries"] = df["countries"].apply(lambda s: s.split(";"))
+    return df
+
+@st.cache_data
+def load_budget_exp():
     budget = pd.read_csv("data/Cleaned_Defence_Budget.csv")
-    military_exp = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
-    return budget, military_exp
+    exp    = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
+    return budget, exp
 
-budget_df, exp_df = load_data()
-
-# --- Conflict Metadata (with outcomes) ---
-conflicts = {
-    'Indo-China War (1962)': {
-        'year': 1962,
-        'countries': ['India', 'China'],
-        'region': 'Asia',
-        'description': 'Border conflict between India and China in the Himalayas.',
-        'impact': 'Significant impact on Indian military modernization and border defense strategies.',
-        'outcome': 'China withdrew to pre-war lines; Tashkent Declaration signed; India overhauled defenses.',
-        'events': [
-            {"date":"1960","event":"Initial border clashes begin."},
-            {"date":"1961","event":"Roads built by China in Aksai Chin."},
-            {"date":"Oct 20, 1962","event":"China launches simultaneous attacks."},
-            {"date":"Nov 5, 1962","event":"Indian reinforcements airlifted."},
-            {"date":"Nov 20, 1962","event":"China declares ceasefire."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":29,"lon":94},"to":{"lat":35,"lon":80}}
-        ]
-    },
-    'Indo-Pakistan War (1965)': {
-        'year': 1965,
-        'countries': ['India','Pakistan'],
-        'region': 'Asia',
-        'description': 'Second Indo-Pakistan war over Kashmir.',
-        'impact': 'Led to military reforms and increased defense spending.',
-        'outcome': 'Status quo ante restored; Tashkent Declaration signed.',
-        'events': [
-            {"date":"1963","event":"Rann of Kutch skirmishes."},
-            {"date":"Aug 1965","event":"Operation Gibraltar begins."},
-            {"date":"Sep 6, 1965","event":"India crosses international border."},
-            {"date":"Sep 22, 1965","event":"UN calls for ceasefire."},
-            {"date":"1967","event":"Border tensions flare again."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":31.5,"lon":74.3},"to":{"lat":33.5,"lon":74.8}}
-        ]
-    },
-    'Six-Day War (1967)': {
-        'year': 1967,
-        'countries': ['Israel','Egypt','Syria','Jordan'],
-        'region': 'Middle East',
-        'description': 'Major Arab-Israeli conflict.',
-        'impact': 'Reshaped Middle Eastern alliances.',
-        'outcome': 'Israel captured Sinai, Golan Heights, West Bank, Gaza; UN 242 passed.',
-        'events': [
-            {"date":"1965","event":"Yemen conflict draws in Egypt."},
-            {"date":"Jun 5, 1967","event":"Israel launches preemptive strikes."},
-            {"date":"Jun 7, 1967","event":"Sinai offensive begins."},
-            {"date":"Jun 9, 1967","event":"Golan Heights seized."},
-            {"date":"Jun 10, 1967","event":"Ceasefire across all fronts."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":31.5,"lon":34.8},"to":{"lat":30.0,"lon":33.0}}
-        ]
-    },
-    'Indo-Pakistan War (1971)': {
-        'year': 1971,
-        'countries': ['India','Pakistan'],
-        'region': 'Asia',
-        'description': 'War leading to the creation of Bangladesh.',
-        'impact': 'South Asian power dynamics shifted; Pakistan split.',
-        'outcome': 'Bangladesh liberated; Dhaka surrender; Shimla Agreement signed.',
-        'events': [
-            {"date":"1969","event":"East Pakistan protests ignite."},
-            {"date":"Mar 26, 1971","event":"Bangladesh declares independence."},
-            {"date":"Dec 3, 1971","event":"India launches operations."},
-            {"date":"Dec 16, 1971","event":"Pakistan surrenders in Dhaka."},
-            {"date":"1973","event":"Post-war exercises expand."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":25.0,"lon":90.0},"to":{"lat":23.7,"lon":90.4}}
-        ]
-    },
-    'Soviet-Afghan War (1979-1989)': {
-        'year': 1979,
-        'countries': ['Soviet Union','Afghanistan'],
-        'region': 'Asia',
-        'description': 'Soviet military intervention in Afghanistan.',
-        'impact': 'Cold War dynamics and regional stability affected.',
-        'outcome': 'Soviet withdrawal in 1989; ensuing civil war.',
-        'events': [
-            {"date":"1978","event":"Saur Revolution."},
-            {"date":"Dec 24, 1979","event":"Soviet invasion begins."},
-            {"date":"1985","event":"Gorbachev announces withdrawal plans."},
-            {"date":"Feb 15, 1989","event":"Soviet troops leave."},
-            {"date":"1992","event":"PDPA government falls."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":41.0,"lon":61.0},"to":{"lat":34.5,"lon":69.2}}
-        ]
-    },
-    'Gulf War (1990-1991)': {
-        'year': 1990,
-        'countries': ['United States','Iraq','Kuwait'],
-        'region': 'Middle East',
-        'description': 'Coalition vs. Iraq over Kuwait invasion.',
-        'impact': 'Modern warfare technology revolutionized.',
-        'outcome': 'Kuwait liberated; Iraq under sanctions.',
-        'events': [
-            {"date":"Aug 2, 1990","event":"Iraq invades Kuwait."},
-            {"date":"Jan 17, 1991","event":"Operation Desert Storm begins."},
-            {"date":"Feb 24, 1991","event":"Ground offensive."},
-            {"date":"Feb 28, 1991","event":"Ceasefire; liberation."},
-            {"date":"1993","event":"No-fly zones enforced."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":25.0,"lon":45.0},"to":{"lat":29.0,"lon":48.0}}
-        ]
-    },
-    'Kargil War (1999)': {
-        'year': 1999,
-        'countries': ['India','Pakistan'],
-        'region': 'Asia (Kashmir)',
-        'description': 'Infiltration along the LoC in Kargil.',
-        'impact': 'Heightened tensions; border security strengthened.',
-        'outcome': 'India regained posts; conflict ended by July 1999.',
-        'events': [
-            {"date":"May 1999","event":"Intrusion detected."},
-            {"date":"Jun 1999","event":"Battles at Tololing."},
-            {"date":"Jul 4, 1999","event":"Tiger Hill recaptured."},
-            {"date":"Jul 26, 1999","event":"Operation Vijay ends."},
-            {"date":"2001","event":"LoC fence reinforced."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":34.6,"lon":76.2},"to":{"lat":34.5,"lon":76.1}}
-        ]
-    },
-    'Afghanistan War (2001-2021)': {
-        'year': 2001,
-        'countries': ['United States','Afghanistan'],
-        'region': 'Asia',
-        'description': 'US-led intervention after 9/11.',
-        'impact': 'Longest US war; changed counter-terrorism.',
-        'outcome': 'US withdrawal; Taliban regained control.',
-        'events': [
-            {"date":"Oct 7, 2001","event":"Operation Enduring Freedom."},
-            {"date":"Nov 2001","event":"Taliban regime collapses."},
-            {"date":"2011","event":"Osama bin Laden killed."},
-            {"date":"Aug 30, 2021","event":"US completes withdrawal."},
-            {"date":"2022","event":"Taliban consolidates control."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":38.0,"lon":68.0},"to":{"lat":34.5,"lon":69.2}}
-        ]
-    },
-    'Iraq War (2003-2011)': {
-        'year': 2003,
-        'countries': ['United States','Iraq'],
-        'region': 'Middle East',
-        'description': 'US-led invasion and occupation of Iraq.',
-        'impact': 'Major impact on regional geopolitics.',
-        'outcome': 'US withdrawal in 2011; ongoing insurgency.',
-        'events': [
-            {"date":"Mar 20, 2003","event":"Invasion begins."},
-            {"date":"Apr 9, 2003","event":"Fall of Baghdad."},
-            {"date":"2006","event":"Surge strategy deployed."},
-            {"date":"Dec 15, 2011","event":"War formally ends."},
-            {"date":"2012","event":"Last troops leave."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":28.0,"lon":48.0},"to":{"lat":33.3,"lon":44.4}}
-        ]
-    },
-    'URI Surgical Strike (2016)': {
-        'year': 2016,
-        'countries': ['India','Pakistan (claimed)'],
-        'region': 'Asia (Kashmir)',
-        'description': "India's claimed surgical strikes across the LoC after Uri attack.",
-        'impact': 'Tensions spiked; diplomatic fallout.',
-        'outcome': 'Mixed claims; ceasefire violations increased.',
-        'events': [
-            {"date":"Sep 18, 2016","event":"Uri Army base attack."},
-            {"date":"Sep 29, 2016","event":"Surgical strikes carried out."},
-            {"date":"2017","event":"Diplomatic tensions rise."},
-            {"date":"2019","event":"Ceasefire violations continue."},
-            {"date":"2020","event":"LoC engagements persist."}
-        ],
-        'troop_movements': [
-            {"from":{"lat":34.1,"lon":74.1},"to":{"lat":34.05,"lon":74.05}}
-        ]
-    }
-}
-
-
-
-
-# --- Additional Sector Markers ---
-additional_movements = {
-    'Indo-China War (1962)': [
-        {"lat":33.9,"lon":78.2,"label":"Rezang La Sector"},
-        {"lat":32.9,"lon":78.8,"label":"Tawang Sector"}
-    ],
-    'Indo-Pakistan War (1965)': [
-        {"lat":31.5,"lon":74.3,"label":"Amritsar Sector"},
-        {"lat":32.0,"lon":75.1,"label":"Jammu Front"}
-    ],
-    'Indo-Pakistan War (1971)': [
-        {"lat":24.5,"lon":88.3,"label":"Jessore Advance"},
-        {"lat":23.9,"lon":91.3,"label":"Agartala Front"}
-    ],
-    'Gulf War (1990-1991)': [
-        {"lat":29.5,"lon":47.7,"label":"Desert Storm Entry"},
-        {"lat":30.5,"lon":47.8,"label":"Basra Advance"}
-    ],
-    'Iraq War (2003-2011)': [
-        {"lat":33.4,"lon":44.2,"label":"Baghdad Advance"},
-        {"lat":31.9,"lon":44.5,"label":"Basra Front"}
-    ]
-}
-
-# --- Military Strength Data ---
-strength_db = {
-    "1962": {"India":{"Personnel":350000,"Tanks":200,"Fighter Aircraft":100},
-             "China":{"Personnel":800000,"Tanks":700,"Fighter Aircraft":400}},
-    "1965": {"India":{"Personnel":825000,"Tanks":720,"Fighter Aircraft":460},
-             "Pakistan":{"Personnel":365000,"Tanks":600,"Fighter Aircraft":300}},
-    "1967": {"Israel":{"Personnel":275000,"Tanks":800,"Fighter Aircraft":300},
-             "Egypt":{"Personnel":240000,"Tanks":900,"Fighter Aircraft":350}},
-    "1971": {"India":{"Personnel":1000000,"Tanks":2200,"Fighter Aircraft":450},
-             "Pakistan":{"Personnel":365000,"Tanks":1700,"Fighter Aircraft":300}},
-    "1979": {"Soviet Union":{"Personnel":900000,"Tanks":2000,"Fighter Aircraft":700},
-             "Afghanistan":{"Personnel":170000,"Tanks":500,"Fighter Aircraft":100}},
-    "1990": {"United States":{"Personnel":540000,"Tanks":2000,"Fighter Aircraft":1400},
-             "Iraq":{"Personnel":650000,"Tanks":5000,"Fighter Aircraft":700}},
-    "1999": {"India":{"Personnel":1100000,"Tanks":3100,"Fighter Aircraft":620},
-             "Pakistan":{"Personnel":560000,"Tanks":2400,"Fighter Aircraft":410}},
-    "2001": {"United States":{"Personnel":98000,"Tanks":1000,"Fighter Aircraft":1200},
-             "Afghanistan":{"Personnel":40000,"Tanks":100,"Fighter Aircraft":40}},
-    "2003": {"United States":{"Personnel":150000,"Tanks":1300,"Fighter Aircraft":1100},
-             "Iraq":{"Personnel":375000,"Tanks":2000,"Fighter Aircraft":300}},
-    "2016": {"India":{"Personnel":1450000,"Tanks":4201,"Fighter Aircraft":513},
-             "Pakistan":{"Personnel":654000,"Tanks":2627,"Fighter Aircraft":328}}
-}
-
-# --- Conflict Locations ---
-conflict_locations = {
-    'Indo-China War (1962)': {"lat":33.7,"lon":78.0,"label":"Aksai Chin"},
-    'Indo-Pakistan War (1965)':{"lat":32.5,"lon":74.0,"label":"Lahore Front"},
-    'Six-Day War (1967)':     {"lat":31.5,"lon":34.8,"label":"Gaza-Sinai"},
-    'Indo-Pakistan War (1971)':{"lat":23.7,"lon":90.4,"label":"Dhaka"},
-    'Soviet-Afghan War (1979-1989)':{"lat":34.5,"lon":69.2,"label":"Kabul"},
-    'Gulf War (1990-1991)':    {"lat":29.3,"lon":47.9,"label":"Kuwait City"},
-    'Kargil War (1999)':       {"lat":34.5,"lon":76.1,"label":"Kargil"},
-    'Afghanistan War (2001-2021)':{"lat":34.5,"lon":69.2,"label":"Kabul"},
-    'Iraq War (2003-2011)':    {"lat":33.3,"lon":44.4,"label":"Baghdad"},
-    'URI Surgical Strike (2016)':{"lat":34.08,"lon":74.13,"label":"Uri, J&K"}
-}
+conflicts_df = load_conflicts()
+budget_df, exp_df = load_budget_exp()
 
 # --- Conflict Images ---
 conflict_images = {
@@ -297,227 +57,187 @@ conflict_images = {
     "URI Surgical Strike (2016)": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlIuLBCYsRDE0JUheLF06tCBaFxja3MpLhvQ&s"
 }
 
-
-# --- User Interaction ---
-regions = sorted({c['region'] for c in conflicts.values()})
+# --- Sidebar selections ---
+regions = sorted(conflicts_df["region"].unique())
 region = st.selectbox("🌍 Select Region:", regions)
-wars = [w for w,d in conflicts.items() if d['region']==region]
-war = st.selectbox("🎯 Select Conflict/War:", wars)
 
-if war:
-    info = conflicts[war]
-    year = info['year']
+wars_in_region = conflicts_df[conflicts_df["region"] == region]
+war = st.selectbox("🎯 Select Conflict/War:", wars_in_region["war_name"].tolist())
 
+# pull the selected row
+row = wars_in_region[wars_in_region["war_name"] == war].iloc[0]
+year = row["year"]
+countries = row["countries"]
+loc = row["location"]
+events = row["events_timeline"]
+troop_moves = row["troop_movements"]
+strength = row["military_strength"]
 
-    # ── Visual & Summary ──
-    st.markdown("### 📷 Visual & Summary")
-    img_col, sum_col = st.columns([1.5, 2])
-    with img_col:
-        if war in conflict_images:
+# ── Summary ──
+st.markdown("### 📷 Visual & Summary")
+col1, col2 = st.columns([1,2])
+with col1:
+    if war in conflict_images:
             st.image(conflict_images[war], use_container_width=True)
-    with sum_col:
-        real_loc = get_location_name(
-            conflict_locations[war]["lat"],
-            conflict_locations[war]["lon"]
+with col2:
+    addr = get_location_name(loc["lat"], loc["lon"])
+    st.markdown(f"""
+    **Conflict:** {war}  
+    **Year:** {year}  
+    **Region:** {region}  
+    **Countries:** {', '.join(countries)}  
+    **Location:** {addr}  
+    """)
+    st.markdown("#### 🕒 Key Events")
+    for ev in events:
+        st.write(f"- **{ev['date']}**: {ev['event']}")
+
+st.markdown("---")
+
+# ── Tabs ──
+tab = st.radio("📂 Select Section:", 
+               ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], 
+               horizontal=True)
+
+if tab == "📊 Budget Trends":
+    st.subheader(f"📈 Defense Budget Trends Around {war}")
+    # we only have budget data for India in the original dataset
+    if "India" in countries:
+        # build year range
+        yrs = [str(y) for y in range(year-2, year+3)]
+        df_gdp = budget_df[budget_df["Country Name"]=="India"][yrs].T.reset_index()
+        df_gdp.columns = ["Year","% of GDP"]
+        df_usd = exp_df[exp_df["Name"]=="India"][yrs].T.reset_index()
+        df_usd.columns = ["Year","Expenditure (USD)"]
+        merged = pd.merge(df_gdp, df_usd, on="Year")
+        merged["Year"] = merged["Year"].astype(int)
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=merged["Year"], y=merged["% of GDP"],
+                                 name="% of GDP", mode="lines+markers"))
+        fig.add_trace(go.Scatter(x=merged["Year"], y=merged["Expenditure (USD)"],
+                                 name="Expenditure (USD)", mode="lines+markers",
+                                 yaxis="y2"))
+        fig.add_vline(x=year, line_color="red", line_dash="dash")
+        fig.update_layout(
+            xaxis_title="Year",
+            yaxis=dict(title="% of GDP"),
+            yaxis2=dict(title="Expenditure (USD)", overlaying="y", side="right"),
+            hovermode="x unified",
+            template="plotly_white"
         )
-        st.markdown(f"""
-            **Conflict:** {war}  
-            **Year:** {year}  
-            **Region:** {info['region']}  
-            **Countries:** {', '.join(info['countries'])}  
-            **Description:** {info['description']}  
-            **Impact:** {info['impact']}  
-        """)
-        st.markdown("#### 🕒 Key Events")
-        for ev in info['events']:
-            st.write(f"- **{ev['date']}**: {ev['event']}")
-
-    st.markdown("---")
-
-    # ── Tabs ──
-    tab = st.radio("📂 Select Section:", ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], horizontal=True)
-
-    if tab=="📊 Budget Trends":
-        st.subheader(f"📈 Defense Budget Trends Around {war}")
-        if 'India' in info['countries']:
-            budget_india = budget_df[budget_df["Country Name"]=="India"]
-            exp_india    = exp_df[exp_df["Name"]=="India"]
-            years        = [str(y) for y in range(year-2, year+3)]
-            gdp_df       = budget_india[years].T.reset_index()
-            gdp_df.columns = ["Year","% of GDP"]
-            usd_df       = exp_india[years].T.reset_index()
-            usd_df.columns = ["Year","Expenditure (USD)"]
-            merged       = pd.merge(gdp_df,usd_df,on="Year")
-            merged["Year"] = merged["Year"].astype(int)
-
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=merged["Year"], y=merged["% of GDP"], name="% of GDP", mode='lines+markers'))
-            fig.add_trace(go.Scatter(x=merged["Year"], y=merged["Expenditure (USD)"], name="Expenditure (USD)", mode='lines+markers', yaxis="y2"))
-            fig.add_vline(x=year, line_color="red", line_dash="dash")
-            fig.update_layout(
-                xaxis_title="Year",
-                yaxis=dict(title="% of GDP"),
-                yaxis2=dict(title="Expenditure (USD)", overlaying="y", side="right"),
-                hovermode="x unified",
-                template="plotly_white"
-            )
-            st.plotly_chart(fig,use_container_width=True)
-        else:
-            st.info("📊 No defense budget data available for this country.")
-
-    elif tab=="🪖 Military Strength":
-        st.subheader("🪖 Military Strength Comparison")
-        sel_year = str(year)
-        if sel_year in strength_db:
-            strength = strength_db[sel_year]
-            categories = list(strength[list(strength.keys())[0]].keys())
-            fig_strength = go.Figure()
-            for country in strength:
-                fig_strength.add_trace(go.Bar(
-                    x=[strength[country][cat] for cat in categories],
-                    y=categories,
-                    name=country,
-                    orientation='h'
-                ))
-            fig_strength.update_layout(
-                barmode='group',
-                xaxis_title='Units',
-                yaxis_title='Category',
-                template='plotly_white'
-            )
-            st.plotly_chart(fig_strength,use_container_width=True)
-        else:
-            st.info("🪖 Military strength data not available for this conflict.")
-
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.subheader("🗺️ Conflict Map & 5-Step Troop Movements")
+        st.info("📊 No defense budget data available for this conflict.")
 
-        # pick exactly 5 events from origin → end
-        evs=info['events']
-        if len(evs)>=5:
-            idxs = np.linspace(0,len(evs)-1,5,dtype=int)
-            sel_evs = [evs[i] for i in idxs]
-        else:
-            sel_evs = evs + [{"date":"","event":""}]*(5-len(evs))
+elif tab == "🪖 Military Strength":
+    st.subheader("🪖 Military Strength Comparison")
+    cats = list(next(iter(strength.values())).keys())
+    fig2 = go.Figure()
+    for ctry, metrics in strength.items():
+        fig2.add_trace(go.Bar(
+            x=[metrics[cat] for cat in cats],
+            y=cats,
+            name=ctry,
+            orientation="h"
+        ))
+    fig2.update_layout(
+        barmode="group",
+        xaxis_title="Units",
+        yaxis_title="Category",
+        template="plotly_white"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
-        # interpolate 5 positions
-        f=info['troop_movements'][0]['from']
-        t=info['troop_movements'][0]['to']
-        lats=np.linspace(f['lat'],t['lat'],5)
-        lons=np.linspace(f['lon'],t['lon'],5)
-        positions=[{"lat":lat,"lon":lon} for lat,lon in zip(lats,lons)]
+else:  # Conflict Map & Troop Movements
+    st.subheader("🗺️ Conflict Map & 5-Step Troop Movements")
 
-        map_ph=st.empty()
-        txt_ph=st.empty()
-        play=st.checkbox("▶️ Play Animation")
-        def render(i):
-            origin = positions[0]
-            terminus = positions[-1]
+    # pick 5 evenly spaced steps
+    evs = events
+    if len(evs) >= 5:
+        idx = np.linspace(0, len(evs)-1, 5, dtype=int)
+        sel_evs = [evs[i] for i in idx]
+    else:
+        sel_evs = evs + [{"date":"","event":""}]* (5-len(evs))
 
-            # reverse geocode start/end
-            start_name = get_location_name(origin["lat"], origin["lon"])
-            end_name   = get_location_name(terminus["lat"], terminus["lon"])
+    f = troop_moves[0]["from"]
+    t = troop_moves[0]["to"]
+    lats = np.linspace(f["lat"], t["lat"], 5)
+    lons = np.linspace(f["lon"], t["lon"], 5)
+    positions = [{"lat":la, "lon":lo} for la, lo in zip(lats, lons)]
 
-            layers = []
+    map_ph = st.empty()
+    txt_ph = st.empty()
+    play = st.checkbox("▶️ Play Animation")
 
-            # 🟢 START marker
-            df_start = pd.DataFrame([{
-                "lat": origin["lat"],
-                "lon": origin["lon"],
-                "label": f"🟢 {start_name} — {sel_evs[0]['date']}"
+    def render(step):
+        layers = []
+        origin = positions[0]
+        term   = positions[-1]
+        start_name = get_location_name(origin["lat"], origin["lon"])
+        end_name   = get_location_name(term["lat"], term["lon"])
+        # start marker
+        df_s = pd.DataFrame([{"lat":origin["lat"], "lon":origin["lon"],
+                              "label":f"🟢 {start_name} — {sel_evs[0]['date']}"}])
+        layers.append(pdk.Layer("ScatterplotLayer", data=df_s,
+                       get_position="[lon, lat]", get_color="[0,200,0,200]",
+                       get_radius=30000))
+        # end marker
+        df_e = pd.DataFrame([{"lat":term["lat"], "lon":term["lon"],
+                              "label":f"🔴 {end_name} — {sel_evs[-1]['date']}"}])
+        layers.append(pdk.Layer("ScatterplotLayer", data=df_e,
+                       get_position="[lon, lat]", get_color="[200,0,0,200]",
+                       get_radius=30000))
+        # path up to this step
+        if step>0:
+            df_line = pd.DataFrame([{
+                "start_lon": positions[step-1]["lon"],
+                "start_lat": positions[step-1]["lat"],
+                "end_lon":   positions[step]["lon"],
+                "end_lat":   positions[step]["lat"]
             }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_start,
-                get_position='[lon, lat]',
-                get_color='[0, 255, 0, 200]',
-                get_radius=30000, pickable=True
-            ))
+            layers.append(pdk.Layer("LineLayer", data=df_line,
+                           get_source_position="[start_lon, start_lat]",
+                           get_target_position="[end_lon, end_lat]",
+                           get_width=4))
+        # moving marker
+        df_m = pd.DataFrame([{"lat":positions[step]["lat"],
+                              "lon":positions[step]["lon"],
+                              "label":f"🔵 {sel_evs[step]['date']}"}])
+        layers.append(pdk.Layer("ScatterplotLayer", data=df_m,
+                       get_position="[lon, lat]", get_color="[0,0,255,180]",
+                       get_radius=20000))
 
-            # 🔴 END marker
-            df_end = pd.DataFrame([{
-                "lat": terminus["lat"],
-                "lon": terminus["lon"],
-                "label": f"🔴 {end_name} — {sel_evs[-1]['date']}"
-            }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_end,
-                get_position='[lon, lat]',
-                get_color='[255, 0, 0, 200]',
-                get_radius=30000, pickable=True
-            ))
+        deck = pdk.Deck(
+            map_style="mapbox://styles/mapbox/satellite-streets-v11",
+            initial_view_state=pdk.ViewState(
+                latitude=(origin["lat"]+term["lat"])/2,
+                longitude=(origin["lon"]+term["lon"])/2,
+                zoom=5, pitch=45
+            ),
+            layers=layers,
+            tooltip={"text":"{label}"}
+        )
+        map_ph.pydeck_chart(deck)
 
-            # fixed sector markers (unchanged)
-            if war in additional_movements:
-                df_sec = pd.DataFrame(additional_movements[war])
-                layers.append(pdk.Layer(
-                    "ScatterplotLayer", data=df_sec,
-                    get_position='[lon, lat]',
-                    get_color='[0, 200, 200, 150]',
-                    get_radius=15000, pickable=True
-                ))
+    st.markdown("""
+      <div style="background:#fff;padding:8px;border-radius:4px;display:inline-block;">
+        <span style="color:green;">🟢 Start Point</span>  
+        <span style="color:red;">🔴 End Point</span>
+      </div>
+    """, unsafe_allow_html=True)
 
-            # path up to this step
-            if i > 0:
-                df_line = pd.DataFrame([{
-                    "start_lon": positions[i-1]['lon'],
-                    "start_lat": positions[i-1]['lat'],
-                    "end_lon":   positions[i]['lon'],
-                    "end_lat":   positions[i]['lat']
-                }])
-                layers.append(pdk.Layer(
-                    "LineLayer", data=df_line,
-                    get_source_position="[start_lon, start_lat]",
-                    get_target_position="[end_lon, end_lat]",
-                    get_width=4
-                ))
-
-            # 🔵 moving marker
-            df_move = pd.DataFrame([{
-                "lat": positions[i]['lat'],
-                "lon": positions[i]['lon'],
-                "label": f"🔵 {sel_evs[i]['date']}"
-            }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_move,
-                get_position='[lon, lat]',
-                get_color='[0, 0, 255, 180]',
-                get_radius=20000, pickable=True
-            ))
-
-            # render deck
-            deck = pdk.Deck(
-                map_style="mapbox://styles/mapbox/satellite-streets-v11",
-                initial_view_state=pdk.ViewState(
-                    latitude=(origin["lat"] + terminus["lat"])/2,
-                    longitude=(origin["lon"] + terminus["lon"])/2,
-                    zoom=5, pitch=45
-                ),
-                layers=layers,
-                tooltip={"text": "{label}"}
-            )
-            map_ph.pydeck_chart(deck)
-
-        # ─── Legend ───
-        st.markdown("""
-        <div style="background:#fff;padding:8px;border-radius:4px;display:inline-block;">
-        <span style="color:green;">🟢 Start Point</span> – origin of the war<br>
-        <span style="color:red;">🔴 End Point</span> – where the war ended
-        </div>
-        """, unsafe_allow_html=True)
-
-        if play:
-            for i, ev in enumerate(sel_evs):
-                txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
-                render(i)
-                time.sleep(1)
-        else:
-            step=st.slider("Step",0,4,0)
-            ev=sel_evs[step]
-            txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
-            render(step)
-
-        st.markdown("### 🏁 Outcome")
-        st.write(info['outcome'])
+    if play:
+        for i in range(5):
+            txt_ph.markdown(f"**{sel_evs[i]['date']}** — {sel_evs[i]['event']}")
+            render(i)
+            time.sleep(1)
+    else:
+        step = st.slider("Step", 0, 4, 0)
+        txt_ph.markdown(f"**{sel_evs[step]['date']}** — {sel_evs[step]['event']}")
+        render(step)
+    st.markdown("### 🏁 Outcome")
+    st.write(info['outcome'])
 
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
