@@ -11,7 +11,7 @@ st.set_page_config(page_title="🌍 Military Dashboard", layout="wide", page_ico
 # —— Data loading —— 
 @st.cache_data
 def load_data():
-    return pd.read_csv("military_data.csv")
+    return pd.read_csv("data/military_data.csv")
 
 df = load_data()
 numeric_cols = df.select_dtypes(include='number').columns.tolist()
