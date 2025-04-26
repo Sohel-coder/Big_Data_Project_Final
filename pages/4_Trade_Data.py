@@ -327,6 +327,10 @@ fig_bubble.update_layout(
         tickfont=dict(size=12, color='#333333'),
         gridcolor='#E0E0E0'
     ),
+    legend=dict(
+        title_font_color="#333333",
+        font_color="#333333"
+    ),
     plot_bgcolor='#F0F8FF',
     paper_bgcolor='#F0F8FF',
     title_font_size=20,
@@ -334,6 +338,7 @@ fig_bubble.update_layout(
     margin=dict(l=50, r=50, t=60, b=60),
     showlegend=True
 )
+
 
 # Render bubble chart with click event capture
 bubble_event = st.plotly_chart(fig_bubble, use_container_width=True, key="bubble_chart", on_select="rerun")
