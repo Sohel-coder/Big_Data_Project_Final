@@ -1,121 +1,147 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import numpy as np
 
-st.set_page_config(page_title="Military Strength", layout="wide")
+st.set_page_config(page_title="🌍 Military Dashboard", layout="wide", page_icon="🌏")
 
-st.title("🎖️ Military Strength Comparison (2024)")
-st.markdown(
-    """
-    This section provides insights into the military strength of various countries in 2024.
-    You can compare different countries based on various military metrics.
-    Use the sidebar to select countries and metrics for tailored analysis.
-    """
-)
-
-# Helper function to ensure Arrow compatibility
-def make_arrow_compatible(df):
-    df_copy = df.copy()
-    for col in df_copy.columns:
-        if df_copy[col].dtype == 'object':
-            df_copy[col] = df_copy[col].astype(str)
-        elif col not in ['Year', 'Metric']:
-            df_copy[col] = df_copy[col].apply(
-                lambda x: "{:,}".format(int(x)) if isinstance(x, (int, float)) and abs(x) >= 1 and not pd.isna(x)
-                else (f"{x:.2f}" if isinstance(x, (int, float)) and not pd.isna(x)
-                      else ("N/A" if pd.isna(x) else str(x)))
-            )
-    return df_copy
-
-# Load data
+# —— Data loading —— 
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/2024_military_strength_by_country.csv")
+    return pd.read_csv("military_data.csv")
 
-military_strength = load_data()
+df = load_data()
+numeric_cols = df.select_dtypes(include='number').columns.tolist()
+country_list = df['country'].unique().tolist()
 
-# Country selection
-countries = sorted(military_strength['country'].unique().tolist())
-num_countries = st.slider("Number of countries to compare:", min_value=2, max_value=5, value=2)
-default_countries = ['United States', 'China', 'Russia', 'India']
-default = [c for c in default_countries if c in countries][:num_countries]
-while len(default) < num_countries:
-    default.append(next(c for c in countries if c not in default))
+# —— Header & logo —— 
+st.markdown("""
+    <h1 style='text-align: center; color: #2E8B57;'>
+        🌏 Global Military Power Interactive Dashboard
+    </h1>
+""", unsafe_allow_html=True)
+st.image("https://cdn-icons-png.flaticon.com/512/1035/1035529.png", width=100)
 
-selected_countries = st.multiselect("Select countries:", options=countries, default=default)
+# —— Tabs —— 
+tabs = st.tabs([
+    "🔍 Country Profile Explorer",
+    "📺 Choropleth Map",
+    "📊 Compare Countries",
+    "🏆 Top-N Ranking Tool",
+    "🧠 Correlation Explorer"
+])
 
-if len(selected_countries) < 2:
-    st.warning("Select at least 2 countries.")
-else:
-    # Metrics for comparison
-    metrics = {
-        'Population': 'total_national_populations',
-        'Active Military': 'active_service_military_manpower',
-        'Reserve Forces': 'active_service_reserve_components',
-        'Defense Budget': 'national_annual_defense_budgets',
-        'Fighter Aircraft': 'total_fighter/interceptor_aircraft_strength',
-        'Attack Aircraft': 'total_attack_aircraft_strength',
-        'Helicopters': 'total_helicopter_strength',
-        'Tanks': 'total_combat_tank_strength',
-        'Navy Ships': 'navy_strength',
-        'Power Index (lower is better)': 'pwr_index'
-    }
+# — Module 1: Country Profile Explorer —
+with tabs[0]:
+    st.header("🔍 Country Profile Explorer")
+    country = st.selectbox("Select a country:", sorted(country_list))
+    row = df[df['country'] == country].iloc[0]
 
-    data = []
-    for label, m in metrics.items():
-        row = {'Metric': label}
-        for country in selected_countries:
-            val = military_strength.loc[military_strength['country'] == country, m]
-            row[country] = "{:,}".format(int(val.iloc[0])) if not val.empty and pd.notna(val.iloc[0]) else "N/A"
-        data.append(row)
+    st.markdown("### 📌 General Information")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Active Personnel", f"{int(row['Active Personnel']):,}")
+        st.metric("Reserve Personnel", f"{int(row['Reserve Personnel']):,}")
+        st.metric("Paramilitary", f"{int(row['Paramilitary']):,}")
+        st.metric("Defense Budget (USD)", f"${int(row['Defense Budget']):,}")
+    with col2:
+        st.metric("Total Aircraft Strength", f"{int(row['Total Aircraft Strength']):,}")
+        st.metric("Tanks", f"{int(row['Tanks']):,}")
+        st.metric("Oil Production (Barrels/day)", f"{int(row['Oil Production']):,}")
+        st.metric("External Debt (USD)", f"${int(row['External Debt']):,}")
 
-    df = pd.DataFrame(data)
-    st.dataframe(make_arrow_compatible(df), use_container_width=True)
+    st.subheader("📊 Military Metrics Overview (Normalized)")
+    bar_attrs = ['Active Personnel', 'Total Aircraft Strength', 'Tanks', 'Oil Production', 'Defense Budget']
+    bar_vals = [0 if pd.isna(row.get(a)) else row.get(a) for a in bar_attrs]
+    log_vals = [np.log1p(v) for v in bar_vals]
+    lo, hi = min(log_vals), max(log_vals)
+    norm_vals = [(v - lo)/(hi - lo) if hi>lo else 1 for v in log_vals]
 
-    # Detailed category comparison
-    categories = ['Air Power', 'Land Forces', 'Naval Power', 'Economic Factors']
-    selected_cat = st.selectbox("Select Category:", categories)
+    bar_df = pd.DataFrame({
+        'Metric': bar_attrs,
+        'Normalized Score': norm_vals,
+        'Original Value': bar_vals
+    }).sort_values('Normalized Score')
 
-    cat_metrics = {
-        'Air Power': ['total_military_aircraft_strength', 'total_fighter/interceptor_aircraft_strength', 'total_attack_aircraft_strength', 'total_helicopter_strength'],
-        'Land Forces': ['active_service_military_manpower', 'total_combat_tank_strength'],
-        'Naval Power': ['navy_strength', 'navy_submarine_strength'],
-        'Economic Factors': ['national_annual_defense_budgets']
-    }[selected_cat]
+    fig1 = px.bar(
+        bar_df, x='Normalized Score', y='Metric', orientation='h',
+        title=f"{country} — Normalized Metrics",
+        template='plotly_dark',
+        color='Metric',
+        hover_data=['Original Value']
+    )
+    st.plotly_chart(fig1, use_container_width=True)
 
-    chart_data = []
-    for m in cat_metrics:
-        for country in selected_countries:
-            v = military_strength.loc[military_strength['country'] == country, m]
-            val = float(v.iloc[0]) if not v.empty else 0
-            chart_data.append({'Metric': m.replace('_', ' ').title(), 'Country': country, 'Value': val})
 
-    cdf = pd.DataFrame(chart_data)
+# — Module 2: Choropleth Map —
+with tabs[1]:
+    st.header("📺 Global Metric Choropleth Map")
+    metric = st.selectbox("Select Metric", numeric_cols, key='choropleth')
+    fig2 = px.choropleth(
+        df,
+        locations="country_code",
+        color=metric,
+        hover_name="country",
+        color_continuous_scale="Agsunset",
+        projection="natural earth",
+        template='plotly_dark',
+        title=f"Global Distribution of {metric}"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
-    st.subheader(f"📊 Detailed Comparison: {selected_cat}")
-    fig = px.bar(cdf, x='Metric', y='Value', color='Country', barmode='group', title=f"{selected_cat} Comparison")
-    st.plotly_chart(fig, use_container_width=True)
 
-    # Radar chart
-    st.subheader("🛡️ Overall Capability Radar")
-    radar_metrics = ['active_service_military_manpower', 'total_military_aircraft_strength', 'total_combat_tank_strength', 'navy_strength', 'national_annual_defense_budgets']
-    radar_labels = ['Personnel', 'Aircraft', 'Tanks', 'Navy', 'Budget']
-    angles = np.linspace(0, 2 * np.pi, len(radar_labels), endpoint=False).tolist()
-    angles += angles[:1]
+# — Module 3: Compare Countries —
+with tabs[2]:
+    st.header("📊 Compare Countries")
+    sel_countries = st.multiselect("Select Countries", country_list, default=country_list[:5])
+    comp_metric = st.selectbox("Select Attribute", numeric_cols, key='compare')
+    subset = df[df['country'].isin(sel_countries)]
 
-    radar_fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    fig3 = px.bar(
+        subset, x="country", y=comp_metric, color="country",
+        title=f"Country Comparison: {comp_metric}",
+        text_auto='.2s',
+        template='plotly_dark'
+    )
+    st.plotly_chart(fig3, use_container_width=True)
 
-    for country in selected_countries:
-        vals = [military_strength.loc[military_strength['country'] == country, m].iloc[0] for m in radar_metrics]
-        max_vals = [military_strength[m].max() or 1 for m in radar_metrics]
-        normalized_vals = [vals[i] / max_vals[i] for i in range(len(vals))]
-        normalized_vals += normalized_vals[:1]
-        ax.plot(angles, normalized_vals, label=country)
-        ax.fill(angles, normalized_vals, alpha=0.1)
 
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(radar_labels)
-    ax.legend(loc='upper right')
-    st.pyplot(radar_fig)
+# — Module 4: Top-N Ranking Tool —
+with tabs[3]:
+    st.header("🏆 Top-N Countries by Metric")
+    rank_metric = st.selectbox("Select Metric", numeric_cols, key='ranking')
+    n = st.slider("Select Top N", 5, 30, 10)
+    top_df = df.nlargest(n, rank_metric)[['country', rank_metric]]
+
+    st.markdown(f"#### Top {n} Countries by `{rank_metric}`")
+    fig4 = px.bar(
+        top_df, x=rank_metric, y="country", orientation='h',
+        text_auto='.2s',
+        template='plotly_dark',
+        color_discrete_sequence=['goldenrod']
+    )
+    fig4.update_layout(yaxis={'categoryorder':'total ascending'})
+    st.plotly_chart(fig4, use_container_width=True)
+    st.dataframe(top_df.reset_index(drop=True), use_container_width=True)
+
+
+# — Module 5: Correlation Explorer —
+with tabs[4]:
+    st.header("🧠 Correlation Explorer")
+    attrs = st.multiselect("Select Attributes", numeric_cols, default=numeric_cols[:8])
+    if len(attrs) < 2:
+        st.warning("Select at least 2 attributes for correlation.")
+    else:
+        corr = df[attrs].corr().round(2)
+        fig5 = px.imshow(
+            corr, text_auto=True,
+            color_continuous_scale="RdBu_r",
+            labels={'color':'Correlation'},
+            title="Correlation Matrix",
+            template='plotly_dark'
+        )
+        fig5.update_xaxes(side="bottom", tickangle=45)
+        st.plotly_chart(fig5, use_container_width=True)
