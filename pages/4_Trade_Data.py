@@ -98,14 +98,44 @@ ct["year"] = ct["financial_year(start)"].astype(int)
 fig = px.bar(
     ct, x="year", y="trade_balance",
     color="trade_balance",
-    color_continuous_scale=["#E6F0FA","#ADD8E6","#87CEEB","#4682B4","#1E40AF"],
-    labels={"trade_balance":"Balance (M USD)","year":"Year"},
-    title=f"Trade Balance Trend for {country}"
+    color_continuous_scale=[
+        "#D0E4F7", "#A1C9EF", "#72AFE8", "#438FE0", "#176FD8"
+    ],
+    labels={"trade_balance":"Trade Balance (Mil USD)","year":"Year"},
+    title=f"Trade Balance Trend for {country}",
+    template="plotly_white"
 )
-fig.update_traces(marker_line_color="#333", marker_line_width=1.5, opacity=0.9)
-fig.update_layout(plot_bgcolor="#F0F8FF", paper_bgcolor="#F0F8FF",
-                  xaxis=dict(tickangle=45), margin=dict(t=60,b=40))
 
+# add big readable text on bars
+fig.update_traces(
+    texttemplate="%{y:.1f}",                # show the bar value
+    textposition="outside",
+    textfont=dict(size=12, color="#1E3A8A")
+)
+
+fig.update_layout(
+    font=dict(family="Helvetica", size=14, color="#333333"),
+    title=dict(font=dict(size=24, color="#1E3A8A")),
+    xaxis=dict(
+        title=dict(text="Year", font=dict(size=16, color="#555555")),
+        tickfont=dict(size=12, color="#333333"),
+        gridcolor="#EEEEEE",
+        zerolinecolor="#DDDDDD"
+    ),
+    yaxis=dict(
+        title=dict(text="Trade Balance (Mil USD)", font=dict(size=16, color="#555555")),
+        tickfont=dict(size=12, color="#333333"),
+        gridcolor="#EEEEEE",
+        zerolinecolor="#DDDDDD"
+    ),
+    margin=dict(l=60, r=30, t=80, b=50),
+    coloraxis_colorbar=dict(
+        title="Balance",
+        tickfont=dict(size=12, color="#333333"),
+        titlefont=dict(size=14, color="#333333")
+    )
+)
+st.plotly_chart(fig, use_container_width=True)
 evt = st.plotly_chart(fig, use_container_width=True, on_select="rerun")
 
 if evt:
@@ -157,15 +187,40 @@ agg["total_b"]   = agg.total/1000
 top6 = agg.nlargest(6,"total")
 
 fig2 = px.scatter(
-    top6, x="country", y="total_b",
-    size="total_b", color="country",
-    size_max=60, title=f"Top 6 Partners (FY {year})",
-    labels={"total_b":"Total Trade (B USD)"},
-    color_discrete_sequence=px.colors.sequential.Blues_r
+    top6,
+    x="country", y="total_trade_billion",
+    size="total_trade_billion",
+    color="total_trade_billion",
+    color_continuous_scale="Blues",
+    size_max=60,
+    labels={"total_trade_billion":"Total Trade (B USD)"},
+    title=f"Top 6 Trading Partners (FY {year})",
+    template="plotly_white"
 )
-fig2.update_traces(marker_line_color="#333", marker_line_width=1.5)
-fig2.update_layout(plot_bgcolor="#F0F8FF", paper_bgcolor="#F0F8FF", margin=dict(t=60,b=40))
 
+fig2.update_traces(
+    marker=dict(line=dict(color="#333333", width=1.5)),
+    hovertemplate='<b>%{x}</b><br>Total Trade: %{y:.1f}B<extra></extra>'
+)
+
+fig2.update_layout(
+    font=dict(family="Helvetica", size=14, color="#333333"),
+    title=dict(font=dict(size=24, color="#1E3A8A")),
+    xaxis=dict(
+        title=dict(text="Country", font=dict(size=16, color="#555555")),
+        tickfont=dict(size=12, color="#333333")
+    ),
+    yaxis=dict(
+        title=dict(text="Total Trade (Billion USD)", font=dict(size=16, color="#555555")),
+        tickfont=dict(size=12, color="#333333"),
+        gridcolor="#EEEEEE",
+        zerolinecolor="#DDDDDD"
+    ),
+    margin=dict(l=60, r=30, t=80, b=50),
+    showlegend=False
+)
+
+st.plotly_chart(fig2, use_container_width=True)
 evt2 = st.plotly_chart(fig2, use_container_width=True, on_select="rerun")
 
 if evt2:
