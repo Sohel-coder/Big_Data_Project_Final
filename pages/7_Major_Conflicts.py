@@ -521,5 +521,3 @@ if war:
 
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
-
-analyse this code well , tell me what other optiions we have to visualize the data. for example can we use box plot , scatter plot , heat map, whisker plot , any other techniques intead of normal line grpah ana bar graph, if yes modify the code accordingly
