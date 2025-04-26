@@ -7,7 +7,7 @@ st.markdown("""
     <style>
     /* Full-screen background */
     .stApp {
-        background: url('https://media.istockphoto.com/id/690203250/photo/us-army-ranger-close-up.jpg?s=612x612&w=0&k=20&c=jBkQ9AV1WgjcJ4PChNVelJ6LY8SpVxe-uQDD2NjLdsE=')
+        background: url('https://media.istockphoto.com/id/1287083951/photo/full-length-portrait-of-an-army-soldier-in-full-military-gear-helmet-glasses-and-mask.jpg?s=612x612&w=0&k=20&c=t7a2Bg6n90dHFZjtpLHxgzl3rVrrdEPL2i9hQZ9rluc=')
                     no-repeat center center fixed;
         background-size: cover;
     }
