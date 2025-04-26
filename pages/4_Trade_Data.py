@@ -69,8 +69,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Load data first
-trade_df = pd.read_csv(r"C:\Users\ASUS\Desktop\New folder\Big data\Project\exports_imports_cleaned.csv")
-events_df = pd.read_csv(r"C:\Users\ASUS\Desktop\New folder\Big data\Project\trade_events_updated2.csv", encoding="latin-1")
+trade_df = pd.read_csv("data/exports_imports_cleaned.csv")
+events_df = pd.read_csv("data/trade_events_updated2.csv", encoding="latin-1")
 
 # Initialize session state for both popups and selected year
 if 'show_popup' not in st.session_state:
