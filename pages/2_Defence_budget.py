@@ -184,9 +184,6 @@ with tab3:
         branchvalues="total"
     )
 
-    # 🔥 ONLY SHOW ROOT + DECADES AT FIRST
-    fig_sb.update_traces(maxdepth=1)
-
     fig_sb.update_layout(
         margin=dict(t=10, b=10, l=10, r=10)
     )
