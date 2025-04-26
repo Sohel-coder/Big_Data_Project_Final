@@ -6,7 +6,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-image: url('https://images.unsplash.com/photo-1567083370726-198ccd78fa0e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8YWNrbm93bGRlZ2VtbnR8ZW58MHx8MHx8fDA%3D');
+        background-image: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=');
         background-attachment: fixed;
         background-size: cover;
     }
