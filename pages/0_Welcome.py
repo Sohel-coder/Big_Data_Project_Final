@@ -12,7 +12,7 @@ st.set_page_config(
 @st.cache_data
 def load_strength():
     # adjust path as needed
-    return pd.read_csv("2024_military_strength_by_country.csv")
+    return pd.read_csv("data/2024_military_strength_by_country.csv")
 
 military_strength = load_strength()
 
