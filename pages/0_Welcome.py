@@ -9,7 +9,7 @@ def load_data():
 military_strength = load_data()
 
 # ——— Page config ———
-st.set_page_config(page_title="Art of War – Welcome", layout="wide")
+st.set_page_config(page_title="Welcome", layout="wide")
 
 # ——— Welcome-page CSS ———
 st.markdown("""
