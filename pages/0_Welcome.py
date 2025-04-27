@@ -36,7 +36,7 @@ st.markdown(
     <style>
     /* Full-screen war-scene background */
     .stApp {
-      background: url('https://t3.ftcdn.net/jpg/08/06/91/92/240_F_806919202_HHI0NY4rRWARQm8FX12WHFL1gZRGs3jR.jpg')
+      background: url('https://static.vecteezy.com/system/resources/previews/027/103/278/non_2x/silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities-free-photo.jpg')
                   no-repeat center center fixed;
       background-size: cover;
     }
