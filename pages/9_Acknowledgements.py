@@ -13,7 +13,7 @@ st.markdown(
     <style>
     /* Full-screen app container with centered native-size background */
     .stApp {
-        background-image: url('https://media.istockphoto.com/id/1277600467/photo/silhouette-of-combatants-against-sky.jpg?s=612x612&w=0&k=20&c=oDYkEh1pJo8eyrsgEocHs7tWGM_DfcCigUPsg7XOym4=');
+        background-image: url('https://static.vecteezy.com/system/resources/previews/027/103/278/non_2x/silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities-free-photo.jpg');
         background-attachment: fixed;
         background-size: cover;
     }
