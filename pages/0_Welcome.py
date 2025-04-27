@@ -139,19 +139,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 # ─── WELCOME LAYOUT ────────────────────────────────────────────────────────────
-st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
 
 st.markdown(
-    '<h1 class="welcome-title">🎖️ Art of War – Military Data Analysis</h1>',
-    unsafe_allow_html=True,
+  """
+  <div style="text-align:center;">
+    <h2 class="welcome-title">🎖️ Art of War – Military Data Analysis</h2>
+    <p class="welcome-text">Explore global defense budgets, military strengths, trade flows, and more—all in one place.</p>
+  </div>
+  """,
+  unsafe_allow_html=True
 )
-st.markdown(
-    '<p class="welcome-text">'
-    'Explore global defense budgets, military strengths, trade flows, and more—'
-    'all in one place.'
-    '</p>',
-    unsafe_allow_html=True,
-)
+
 
 # Stats
 st.markdown('<div class="stats-container">', unsafe_allow_html=True)
