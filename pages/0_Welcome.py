@@ -61,7 +61,7 @@ st.markdown(
 
     /* Welcome “card” */
     .welcome-container {
-      background-color: rgba(255,255,255,0.85);
+      background-color: rgba(255,255,255,0.3);
       border-radius: 15px;
       padding: 2rem;
       margin: 2rem auto;
@@ -95,7 +95,7 @@ st.markdown(
       padding: 1.5rem;
       border-radius: 10px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
     .stat-value {
       font-size: 2rem;
@@ -118,7 +118,7 @@ st.markdown(
       background: rgba(255,255,255,0.9);
       padding: 1.5rem;
       border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
       border-left: 4px solid var(--accent-color);
       transition: transform 0.3s ease;
     }
