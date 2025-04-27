@@ -39,8 +39,11 @@ st.markdown(
     <p style="line-height:1.5; font-size:16px;">
       Welcome to the Military Data Analysis Platform<br>
       Embark on a journey through the unseen dynamics of global defense.<br>
-      Discover the pulse of nations — from soaring defense budgets and military might to the intricate webs of trade and alliances.<br>
-      Dive deep into data, uncover hidden patterns, and explore the forces shaping our world — all in one place.
+      Discover the pulse of nations — <br>
+      from soaring defense budgets and <br>
+      military might to the intricate webs of trade and alliances.<br>
+      Dive deep into data, uncover hidden patterns, and <br>
+      explore the forces shaping our world — all in one place.
     </p>
     """,
     unsafe_allow_html=True
