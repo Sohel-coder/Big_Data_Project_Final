@@ -386,7 +386,6 @@ if war:
                 y=list(data.keys()), 
                 x=[data[c]['Personnel'] for c in data],
                 orientation='h',
-                marker_color='steelblue',
                 width=0.25
             ))
             fig_pers.update_layout(
