@@ -35,11 +35,9 @@ st.markdown(
 # Your rest of Home.py content…
 st.markdown("<h1>🎖️ Art of War</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<p>Welcome to the Military Data Analysis Platform!<br>"
-    "Explore : <br>"
-    "Global defence budgets <br>" 
-    "Military strengths <br>"
-    "Trade flows and more all in one place.</p>",
-    
+    "<p>Welcome to the Military Data Analysis Platform<br>",
+    "Embark on a journey through the unseen dynamics of global defense.<br>",
+    "Discover the pulse of nations — from soaring defense budgets and military might to the intricate webs of trade and alliances.<br>",
+    "Dive deep into data, uncover hidden patterns, and explore the forces shaping our world — all in one place.</p>"
     unsafe_allow_html=True
 )
