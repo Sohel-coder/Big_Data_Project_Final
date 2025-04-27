@@ -53,7 +53,7 @@ st.markdown(
     /* Theme colors */
     :root {
       --primary-color: #1E3A8A;
-      --text-color: #1E293B;
+      --text-color: white;
       --accent-color: #4F46E5;
     }
 
