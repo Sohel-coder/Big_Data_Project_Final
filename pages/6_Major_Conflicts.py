@@ -386,7 +386,8 @@ if war:
                 y=list(data.keys()), 
                 x=[data[c]['Personnel'] for c in data],
                 orientation='h',
-                marker_color='steelblue'
+                marker_color='steelblue',
+                width=0.4
             ))
             fig_pers.update_layout(
                 title="Personnel Strength",
@@ -396,7 +397,7 @@ if war:
                 margin=dict(l=80, r=20, t=40, b=40)
             )
             st.plotly_chart(fig_pers, use_container_width=True)
-
+            
             # 2) Tanks vs Fighter Aircraft — grouped horizontal bars
             cats = ["Tanks", "Fighter Aircraft"]
             fig_eq = go.Figure()
@@ -405,7 +406,8 @@ if war:
                     y=cats,
                     x=[data[country][cat] for cat in cats],
                     orientation='h',
-                    name=country
+                    name=country,
+                    width=0.4
                 ))
             fig_eq.update_layout(
                 barmode='group',
