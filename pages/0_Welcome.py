@@ -90,9 +90,7 @@ st.markdown(
     }
     /* Stat cards with a subtle texture behind them */
     .stat-card {
-      background:
-        linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)),
-        url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
+      background:url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
       background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
@@ -119,9 +117,7 @@ st.markdown(
     }
     /* Feature cards with custom imagery */
     .feature-card {
-      background:
-        linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-        url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
+      background: url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
       background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
