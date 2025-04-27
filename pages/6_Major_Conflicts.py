@@ -375,25 +375,44 @@ if war:
     # --- Tab 2: Military Strength ---
     elif tab == "🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
+
         sel_year = str(year)
         if sel_year in strength_db:
-            strength = strength_db[sel_year]
-            cats = list(strength[next(iter(strength))].keys())
-            fig2 = go.Figure()
-            for country, vals in strength.items():
-                fig2.add_trace(go.Bar(
-                    x=[vals[c] for c in cats],
-                    y=cats,
-                    name=country,
-                    orientation="h"
-                ))
-            fig2.update_layout(
-                barmode='group',
-                xaxis_title='Units',
-                yaxis_title='Category',
-                template='plotly_white'
+            data = strength_db[sel_year]
+
+            # 1) Personnel bar chart
+            fig_pers = go.Figure()
+            fig_pers.add_trace(go.Bar(
+                x=list(data.keys()), 
+                y=[data[c]['Personnel'] for c in data],
+                marker_color='steelblue'
+            ))
+            fig_pers.update_layout(
+                title="Personnel Strength",
+                xaxis_title="Country",
+                yaxis_title="Number of Personnel",
+                template="plotly_white"
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig_pers, use_container_width=True)
+
+            # 2) Tanks vs Fighter Aircraft grouped
+            cats = ["Tanks", "Fighter Aircraft"]
+            fig_eq = go.Figure()
+            for country in data:
+                fig_eq.add_trace(go.Bar(
+                    x=cats,
+                    y=[data[country][cat] for cat in cats],
+                    name=country
+                ))
+            fig_eq.update_layout(
+                barmode='group',
+                title="Armored & Air Strength",
+                xaxis_title="Equipment Type",
+                yaxis_title="Count",
+                template="plotly_white"
+            )
+            st.plotly_chart(fig_eq, use_container_width=True)
+
         else:
             st.info("🪖 Data not available for this conflict.")
 
