@@ -97,7 +97,7 @@ st.markdown(
       border-radius: 10px;
       text-align: center;
       background-color: rgba(255,255,255,0.15);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
 
     .stat-value {
