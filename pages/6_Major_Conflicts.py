@@ -380,23 +380,34 @@ if war:
         if sel_year in strength_db:
             data = strength_db[sel_year]
 
-            # 1) Personnel — horizontal bar chart
+            # 1) Personnel — horizontal bar chart (one trace per country, with legend)
             fig_pers = go.Figure()
-            fig_pers.add_trace(go.Bar(
-                y=list(data.keys()), 
-                x=[data[c]['Personnel'] for c in data],
-                orientation='h',
-                width=0.25
-            ))
+            
+            # pick as many colors as you need — here blue for the first country, red for the second
+            colors = ['blue', 'red']
+            
+            for i, country in enumerate(data.keys()):
+                fig_pers.add_trace(go.Bar(
+                    y=[country],
+                    x=[data[country]['Personnel']],
+                    orientation='h',
+                    name=country,                   # gives you a legend entry
+                    marker_color=colors[i % len(colors)],
+                    width=0.4
+                ))
+            
             fig_pers.update_layout(
                 title="Personnel Strength",
                 xaxis_title="Number of Personnel",
                 yaxis_title="Country",
+                barmode='stack',                   # or 'group' if you want them side‐by‐side
                 template="plotly_white",
-                margin=dict(l=80, r=20, t=40, b=40)
+                margin=dict(l=80, r=20, t=40, b=40),
+                legend=dict(title="Country")
             )
+
             st.plotly_chart(fig_pers, use_container_width=True)
-            
+
             # 2) Tanks vs Fighter Aircraft — grouped horizontal bars
             cats = ["Tanks", "Fighter Aircraft"]
             fig_eq = go.Figure()
