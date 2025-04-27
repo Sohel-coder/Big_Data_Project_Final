@@ -19,8 +19,8 @@ def load_data():
     - 2024_military_strength_by_country.csv
     - Defence_budget_cleaned.csv
     """
-    ms = pd.read_csv("2024_military_strength_by_country.csv")
-    db = pd.read_csv("Defence_budget_cleaned.csv")
+    ms = pd.read_csv("data/2024_military_strength_by_country.csv")
+    db = pd.read_csv("data/Cleaned_Defence_Budget.csv")
     return ms, db
 
 military_strength, defense_budget = load_data()
