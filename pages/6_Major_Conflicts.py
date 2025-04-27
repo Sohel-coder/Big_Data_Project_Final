@@ -373,43 +373,47 @@ if war:
         st.plotly_chart(fig, use_container_width=True)
 
     # --- Tab 2: Military Strength ---
-    elif tab == "🪖 Military Strength":
+        elif tab == "🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
 
         sel_year = str(year)
         if sel_year in strength_db:
             data = strength_db[sel_year]
 
-            # 1) Personnel bar chart
+            # 1) Personnel — horizontal bar chart
             fig_pers = go.Figure()
             fig_pers.add_trace(go.Bar(
-                x=list(data.keys()), 
-                y=[data[c]['Personnel'] for c in data],
+                y=list(data.keys()), 
+                x=[data[c]['Personnel'] for c in data],
+                orientation='h',
                 marker_color='steelblue'
             ))
             fig_pers.update_layout(
                 title="Personnel Strength",
-                xaxis_title="Country",
-                yaxis_title="Number of Personnel",
-                template="plotly_white"
+                xaxis_title="Number of Personnel",
+                yaxis_title="Country",
+                template="plotly_white",
+                margin=dict(l=80, r=20, t=40, b=40)
             )
             st.plotly_chart(fig_pers, use_container_width=True)
 
-            # 2) Tanks vs Fighter Aircraft grouped
+            # 2) Tanks vs Fighter Aircraft — grouped horizontal bars
             cats = ["Tanks", "Fighter Aircraft"]
             fig_eq = go.Figure()
             for country in data:
                 fig_eq.add_trace(go.Bar(
-                    x=cats,
-                    y=[data[country][cat] for cat in cats],
+                    y=cats,
+                    x=[data[country][cat] for cat in cats],
+                    orientation='h',
                     name=country
                 ))
             fig_eq.update_layout(
                 barmode='group',
                 title="Armored & Air Strength",
-                xaxis_title="Equipment Type",
-                yaxis_title="Count",
-                template="plotly_white"
+                xaxis_title="Count",
+                yaxis_title="Equipment Type",
+                template="plotly_white",
+                margin=dict(l=100, r=20, t=40, b=40)
             )
             st.plotly_chart(fig_eq, use_container_width=True)
 
