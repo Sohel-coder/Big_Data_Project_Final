@@ -26,17 +26,10 @@ current_df['pwr_index_2047'] = current_df['pwr_index']
 # Prepare comparison DataFrame
 compare_df = current_df.sort_values('pwr_index_2047').reset_index(drop=True)
 
-# --- In-Page Controls ---
+# --- Country Selector ---
 selected_country = st.selectbox(
     "Select a country:",
     options=compare_df['country'].tolist()
-)
-top_n = st.number_input(
-    "Select top N countries:",
-    min_value=1,
-    max_value=len(compare_df),
-    value=10,
-    step=1
 )
 
 # --- Country Detail View ---
@@ -47,6 +40,14 @@ tbl = pd.DataFrame({
     'Power Index': [row['pwr_index'], row['pwr_index_2047']]
 })
 st.table(tbl)
+
+# --- Top N Selector ---
+top_n = st.selectbox(
+    "Select top N countries:",
+    options=list(range(1, len(compare_df) + 1)),
+    index=9,
+    format_func=lambda x: str(x)
+)
 
 # --- Top N Visualization ---
 st.subheader(f"Top {top_n} Strongest Countries by Projected Power Index (2047)")
@@ -62,19 +63,6 @@ fig = px.bar(
 fig.update_traces(textposition='outside')
 fig.update_layout(yaxis=dict(autorange='reversed'))
 st.plotly_chart(fig, use_container_width=True)
-
-# --- Compare Current vs. Projected for Top N ---
-st.subheader(f"Current vs Projected Power Index for Top {top_n}")
-fig2 = px.bar(
-    top_df,
-    x='country',
-    y=['pwr_index', 'pwr_index_2047'],
-    labels={'value': 'Power Index', 'variable': 'Index Type'},
-    title=f"Current vs Projected Power Index for Top {top_n}",
-    text_auto='.2f'
-)
-fig2.update_layout(barmode='group', yaxis=dict(autorange='reversed'))
-st.plotly_chart(fig2, use_container_width=True)
 
 # --- Insight ---
 st.markdown(
