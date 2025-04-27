@@ -373,7 +373,7 @@ if war:
         st.plotly_chart(fig, use_container_width=True)
 
     # --- Tab 2: Military Strength ---
-        elif tab == "🪖 Military Strength":
+    elif tab == "🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
 
         sel_year = str(year)
