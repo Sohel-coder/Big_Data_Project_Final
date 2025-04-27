@@ -50,11 +50,8 @@ conflicts = {
             {"date":"Nov 5, 1962","event":"Indian reinforcements airlifted."},
             {"date":"Nov 20, 1962","event":"China declares ceasefire."}
         ],
-        # We'll only use the eastern axis for the animation:
         'troop_movements': [
-            {"from":{"lat":27.59,"lon":91.87}, "to":{"lat":27.40,"lon":92.02}},  # Tawang → Dirang Dzong
-            {"from":{"lat":27.40,"lon":92.02}, "to":{"lat":27.32,"lon":92.46}},  # Dirang → Bomdi La
-            {"from":{"lat":27.32,"lon":92.46}, "to":{"lat":27.27,"lon":92.23}}   # Bomdi La → Rupa
+            {"from":{"lat":29,"lon":94},"to":{"lat":35,"lon":80}}
         ]
     },
     'Indo-Pakistan War (1965)': {
@@ -300,54 +297,6 @@ conflict_images = {
     "URI Surgical Strike (2016)": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlIuLBCYsRDE0JUheLF06tCBaFxja3MpLhvQ&s"
 }
 
-# --- Impacts on Indian Defence ---
-impacts_on_india = {
-    'Indo-China War (1962)': [
-        'Overhauled mountain warfare capabilities and created specialized high-altitude units',
-        'Accelerated border infrastructure & forward airfield development',
-        'Modernized Army doctrine for border defense'
-    ],
-    'Indo-Pakistan War (1965)': [
-        'Reformed armoured & mechanized forces',
-        'Increased defence budget and artillery modernization',
-        'Enhanced joint operations and command structures'
-    ],
-    'Six-Day War (1967)': [
-        'Incorporated lessons on preemptive air-strikes and integrated air-land operations',
-        'Upgraded IAF planning for rapid mobilization'
-    ],
-    'Indo-Pakistan War (1971)': [
-        'Validated joint amphibious and riverine assault doctrine',
-        'Expanded Navy capabilities and indigenous shipbuilding',
-        'Improved integrated logistics and special operations'
-    ],
-    'Soviet-Afghan War (1979-1989)': [
-        'Enhanced counter-insurgency & mountain warfare training',
-        'Upgraded equipment for high-altitude operations'
-    ],
-    'Gulf War (1990-1991)': [
-        'Influenced procurement of precision-guided munitions & AWACS',
-        'Modernized IAF strike capabilities based on coalition air power lessons'
-    ],
-    'Kargil War (1999)': [
-        'Led to creation of Mountain Strike Corps',
-        'Boosted surveillance with UAVs & sensors',
-        'Reformed tri-service coordination following Kargil Review'
-    ],
-    'Afghanistan War (2001-2021)': [
-        'Reinforced counter-terrorism & stabilization doctrines',
-        'Expanded Indian Army’s expeditionary logistics support'
-    ],
-    'Iraq War (2003-2011)': [
-        'Adopted expeditionary air ops and C4ISR improvements',
-        'Upgraded IAF’s long-range strike planning'
-    ],
-    'URI Surgical Strike (2016)': [
-        'Spurred expansion of special forces & helicopter-borne strike units',
-        'Accelerated development of cross-border precision-strike capability',
-        'Enhanced real-time surveillance and targeting'
-    ]
-}
 
 # --- User Interaction ---
 regions = sorted({c['region'] for c in conflicts.values()})
@@ -441,104 +390,134 @@ if war:
             st.info("🪖 Military strength data not available for this conflict.")
 
     else:
-        # ── Conflict Map Animation ──────────────────────────────────────────
-        segs = info['troop_movements']
-        # build the ordered list of points (start + all 'to')
-        full_route = [segs[0]['from']] + [m['to'] for m in segs]
-        N_STEPS    = len(full_route)
+        st.subheader("🗺️ Conflict Map & 5-Step Troop Movements")
 
-        map_ph   = st.empty()
-        caption  = st.empty()
-        play     = st.checkbox("▶️ Play Animation")
+        # pick exactly 5 events from origin → end
+        evs=info['events']
+        if len(evs)>=5:
+            idxs = np.linspace(0,len(evs)-1,5,dtype=int)
+            sel_evs = [evs[i] for i in idxs]
+        else:
+            sel_evs = evs + [{"date":"","event":""}]*(5-len(evs))
 
-        def render(step):
-            # current position
-            pos = full_route[step]
+        # interpolate 5 positions
+        f=info['troop_movements'][0]['from']
+        t=info['troop_movements'][0]['to']
+        lats=np.linspace(f['lat'],t['lat'],5)
+        lons=np.linspace(f['lon'],t['lon'],5)
+        positions=[{"lat":lat,"lon":lon} for lat,lon in zip(lats,lons)]
 
-            # full route path
-            route_data = [{
-                "path": [[p["lon"], p["lat"]] for p in full_route]
-            }]
-            # travelled path
-            trav_data  = [{
-                "path": [[p["lon"], p["lat"]] for p in full_route[:step+1]]
-            }]
+        map_ph=st.empty()
+        txt_ph=st.empty()
+        play=st.checkbox("▶️ Play Animation")
+        def render(i):
+            origin = positions[0]
+            terminus = positions[-1]
 
-            layers = [
-                # 1) travelled red path
-                pdk.Layer("PathLayer", data=trav_data,
-                    get_path="path", get_width=6, get_color=[255,0,0]),
-                # 2) start marker (green)
-                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
-                    "lat": full_route[0]["lat"],
-                    "lon": full_route[0]["lon"],
-                    "label": "🟢 Start: " + get_location_name(
-                        full_route[0]["lat"], full_route[0]["lon"])
-                }]),
-                    get_position='[lon, lat]', get_color=[0,255,0], get_radius=20000, pickable=True),
-                # 3) end marker (red)
-                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
-                    "lat": full_route[-1]["lat"],
-                    "lon": full_route[-1]["lon"],
-                    "label": "🔴 End: " + get_location_name(
-                        full_route[-1]["lat"], full_route[-1]["lon"])
-                }]),
-                    get_position='[lon, lat]', get_color=[255,0,0], get_radius=20000, pickable=True),
-                # 4) moving marker (blue)
-                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
-                    "lat": pos['lat'],
-                    "lon": pos['lon'],
-                    "label": "🔵 " + get_location_name(pos['lat'], pos['lon'])
-                }]),
-                    get_position='[lon, lat]', get_color=[0,0,255], get_radius=20000, pickable=True),
-                # 5) fixed checkpoints (teal)
-                pdk.Layer("ScatterplotLayer", data=pd.DataFrame(additional_movements.get(war,[])),
-                    get_position='[lon, lat]', get_color=[0,200,200], get_radius=15000, pickable=True),
-                # 6) full route in bold black on top
-                pdk.Layer("PathLayer", data=route_data,
-                    get_path="path", get_width=4, get_color=[0,0,0])
-            ]
+            # reverse geocode start/end
+            start_name = get_location_name(origin["lat"], origin["lon"])
+            end_name   = get_location_name(terminus["lat"], terminus["lon"])
 
-            # render
-            center = np.mean([[p['lat'],p['lon']] for p in full_route], axis=0)
-            deck   = pdk.Deck(
+            layers = []
+
+            # 🟢 START marker
+            df_start = pd.DataFrame([{
+                "lat": origin["lat"],
+                "lon": origin["lon"],
+                "label": f"🟢 {start_name} — {sel_evs[0]['date']}"
+            }])
+            layers.append(pdk.Layer(
+                "ScatterplotLayer", data=df_start,
+                get_position='[lon, lat]',
+                get_color='[0, 255, 0, 200]',
+                get_radius=30000, pickable=True
+            ))
+
+            # 🔴 END marker
+            df_end = pd.DataFrame([{
+                "lat": terminus["lat"],
+                "lon": terminus["lon"],
+                "label": f"🔴 {end_name} — {sel_evs[-1]['date']}"
+            }])
+            layers.append(pdk.Layer(
+                "ScatterplotLayer", data=df_end,
+                get_position='[lon, lat]',
+                get_color='[255, 0, 0, 200]',
+                get_radius=30000, pickable=True
+            ))
+
+            # fixed sector markers (unchanged)
+            if war in additional_movements:
+                df_sec = pd.DataFrame(additional_movements[war])
+                layers.append(pdk.Layer(
+                    "ScatterplotLayer", data=df_sec,
+                    get_position='[lon, lat]',
+                    get_color='[0, 200, 200, 150]',
+                    get_radius=15000, pickable=True
+                ))
+
+            # path up to this step
+            if i > 0:
+                df_line = pd.DataFrame([{
+                    "start_lon": positions[i-1]['lon'],
+                    "start_lat": positions[i-1]['lat'],
+                    "end_lon":   positions[i]['lon'],
+                    "end_lat":   positions[i]['lat']
+                }])
+                layers.append(pdk.Layer(
+                    "LineLayer", data=df_line,
+                    get_source_position="[start_lon, start_lat]",
+                    get_target_position="[end_lon, end_lat]",
+                    get_width=4
+                ))
+
+            # 🔵 moving marker
+            df_move = pd.DataFrame([{
+                "lat": positions[i]['lat'],
+                "lon": positions[i]['lon'],
+                "label": f"🔵 {sel_evs[i]['date']}"
+            }])
+            layers.append(pdk.Layer(
+                "ScatterplotLayer", data=df_move,
+                get_position='[lon, lat]',
+                get_color='[0, 0, 255, 180]',
+                get_radius=20000, pickable=True
+            ))
+
+            # render deck
+            deck = pdk.Deck(
                 map_style="mapbox://styles/mapbox/satellite-streets-v11",
                 initial_view_state=pdk.ViewState(
-                    latitude=center[0], longitude=center[1], zoom=6, pitch=45
+                    latitude=(origin["lat"] + terminus["lat"])/2,
+                    longitude=(origin["lon"] + terminus["lon"])/2,
+                    zoom=5, pitch=45
                 ),
                 layers=layers,
-                tooltip={"text":"{label}"}
+                tooltip={"text": "{label}"}
             )
             map_ph.pydeck_chart(deck)
-            caption.markdown(f"**Current:** {get_location_name(pos['lat'], pos['lon'])}")
 
-        # Legend
+        # ─── Legend ───
         st.markdown("""
-        <div style="background:#fff;padding:6px;border-radius:4px;display:inline-block;">
-          <span style="color:red;">— Travelled</span>  
-          <span style="color:green;">🟢 Start</span>  
-          <span style="color:red;">🔴 End</span>  
-          <span style="color:blue;">🔵 Now</span>  
-          <span style="color:black;">— Full Route</span>  
-          <span style="color:teal;">— Checkpoints</span>
+        <div style="background:#fff;padding:8px;border-radius:4px;display:inline-block;">
+        <span style="color:green;">🟢 Start Point</span> – origin of the war<br>
+        <span style="color:red;">🔴 End Point</span> – where the war ended
         </div>
         """, unsafe_allow_html=True)
 
         if play:
-            for i in range(N_STEPS):
+            for i, ev in enumerate(sel_evs):
+                txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
                 render(i)
                 time.sleep(1)
         else:
-            step = st.slider("Step", 0, N_STEPS-1, 0)
+            step=st.slider("Step",0,4,0)
+            ev=sel_evs[step]
+            txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
             render(step)
 
-        # ── Outcome & Impacts ───────────────────────────────────────────────
         st.markdown("### 🏁 Outcome")
-        for line in info['outcome'].split(';'):
-            st.markdown(f"- {line.strip()}")
-        st.markdown("#### 📌 Impacts on Indian Defence")
-        for pt in impacts_on_india.get(war, []):
-            st.markdown(f"- {pt}")
+        st.write(info['outcome'])
 
 st.markdown("---")
-st.caption("📊 Data Sources: SIPRI | MoD India | Wikipedia | GlobalSecurity.org")
+st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
