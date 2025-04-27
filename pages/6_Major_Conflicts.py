@@ -446,10 +446,20 @@ if war:
 
     else:
         # ── Conflict Map Animation ──────────────────────────────────────────
-        segs = info['troop_movements']
-        full_route = [segs[0]['from']] + [m['to'] for m in segs]
-        N_STEPS = len(full_route)
 
+        # For Indo-China War, use Eastern-axis only: Tawang → Dirang → Bomdi La → Rupa
+        if war=="Indo-China War (1962)":
+            full_route = [
+                {"lat":27.59,"lon":91.87},  # 🟢 Tawang
+                {"lat":27.40,"lon":92.02},  # Dirang Dzong
+                {"lat":27.32,"lon":92.46},  # Bomdi La
+                {"lat":27.27,"lon":92.23},  # 🟥 Rupa
+            ]
+        else:
+            segs = info['troop_movements']
+            full_route = [segs[0]['from']] + [m['to'] for m in segs]
+
+        N_STEPS = len(full_route)
         map_ph   = st.empty()
         caption  = st.empty()
         play     = st.checkbox("▶️ Play Animation")
@@ -459,66 +469,58 @@ if war:
             df_trav = pd.DataFrame(full_route[:step+1])
             pos     = full_route[step]
 
-            # build layers
+            # Layers: full route (black), travelled (red), start (green), end (red), current (blue)
             layers = [
-                # full route
-                pdk.Layer(
-                    "LineLayer", data=df_full,
+                # full route in black
+                pdk.Layer("LineLayer", data=df_full,
                     get_source_position="[lon, lat]",
                     get_target_position="[lon, lat]",
-                    get_color='[180,180,180,120]', get_width=2
-                ),
-                # travelled portion
-                pdk.Layer(
-                    "LineLayer", data=df_trav,
+                    get_color='[0,0,0,200]', get_width=2),
+                # travelled portion in red
+                pdk.Layer("LineLayer", data=df_trav,
                     get_source_position="[lon, lat]",
                     get_target_position="[lon, lat]",
-                    get_color='[255,0,0,220]', get_width=6
-                ),
-                # start marker (green)
-                pdk.Layer(
-                    "ScatterplotLayer", data=pd.DataFrame([{
-                        "lat": full_route[0]["lat"],
-                        "lon": full_route[0]["lon"],
-                        "label": f"🟢 Start: {get_location_name(full_route[0]['lat'], full_route[0]['lon'])}"
-                    }]),
-                    get_position='[lon, lat]', get_color='[0,255,0,220]',
-                    get_radius=20000, pickable=True
-                ),
-                # end marker (red)
-                pdk.Layer(
-                    "ScatterplotLayer", data=pd.DataFrame([{
-                        "lat": full_route[-1]["lat"],
-                        "lon": full_route[-1]["lon"],
-                        "label": f"🔴 End: {get_location_name(full_route[-1]['lat'], full_route[-1]['lon'])}"
-                    }]),
-                    get_position='[lon, lat]', get_color='[255,0,0,220]',
-                    get_radius=20000, pickable=True
-                ),
-                # moving unit (blue)
-                pdk.Layer(
-                    "ScatterplotLayer", data=pd.DataFrame([{
-                        "lat": pos['lat'],
-                        "lon": pos['lon'],
-                        "label": f"🔵 {get_location_name(pos['lat'], pos['lon'])}"
-                    }]),
-                    get_position='[lon, lat]', get_color='[0,0,255,220]',
-                    get_radius=20000, pickable=True
-                )
+                    get_color='[255,0,0,200]', get_width=6),
+                # start marker in green
+                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
+                    "lat": full_route[0]["lat"],
+                    "lon": full_route[0]["lon"],
+                    "label": "🟢 Start: " + get_location_name(full_route[0]["lat"], full_route[0]["lon"])
+                }]),
+                    get_position='[lon, lat]',
+                    get_color='[0,255,0,220]',
+                    get_radius=20000, pickable=True),
+                # end marker in red
+                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
+                    "lat": full_route[-1]["lat"],
+                    "lon": full_route[-1]["lon"],
+                    "label": "🔴 End: " + get_location_name(full_route[-1]["lat"], full_route[-1]["lon"])
+                }]),
+                    get_position='[lon, lat]',
+                    get_color='[255,0,0,220]',
+                    get_radius=20000, pickable=True),
+                # moving marker in blue
+                pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
+                    "lat": pos['lat'],
+                    "lon": pos['lon'],
+                    "label": "🔵 " + get_location_name(pos['lat'], pos['lon'])
+                }]),
+                    get_position='[lon, lat]',
+                    get_color='[0,0,255,220]',
+                    get_radius=20000, pickable=True),
             ]
 
-            # fixed checkpoints
+            # fixed checkpoints (teal)
             if war in additional_movements:
-                layers.append(pdk.Layer(
-                    "ScatterplotLayer",
+                layers.append(pdk.Layer("ScatterplotLayer",
                     data=pd.DataFrame(additional_movements[war]),
                     get_position='[lon, lat]',
-                    get_color='[0,200,200,180]', get_radius=15000, pickable=True
-                ))
+                    get_color='[0,200,200,180]',
+                    get_radius=15000, pickable=True))
 
-            # render map
+            # render
             center = np.mean([[p['lat'],p['lon']] for p in full_route], axis=0)
-            deck   = pdk.Deck(
+            deck = pdk.Deck(
                 map_style="mapbox://styles/mapbox/satellite-streets-v11",
                 initial_view_state=pdk.ViewState(
                     latitude=center[0], longitude=center[1], zoom=6, pitch=45
@@ -527,12 +529,12 @@ if war:
                 tooltip={"text":"{label}"}
             )
             map_ph.pydeck_chart(deck)
-            caption.markdown(f"**Location:** {get_location_name(pos['lat'], pos['lon'])}")
+            caption.markdown(f"**Current:** {get_location_name(pos['lat'], pos['lon'])}")
 
-        # legend
+        # Legend
         st.markdown("""
         <div style="background:#fff;padding:6px;border-radius:4px;display:inline-block;">
-          <span style="color:gray;">— Full Route</span>  
+          <span style="color:black;">— Full Route</span>  
           <span style="color:red;">— Travelled</span>  
           <span style="color:green;">🟢 Start</span>  
           <span style="color:red;">🔴 End</span>  
@@ -549,7 +551,7 @@ if war:
             step = st.slider("Step", 0, N_STEPS-1, 0)
             render(step)
 
-        # ── Outcome & Impacts ────────────────────────────────────────────
+        # ── Outcome & Impacts ───────────────────────────────────────────────
         st.markdown("### 🏁 Outcome")
         for line in info['outcome'].split(';'):
             st.markdown(f"- {line.strip()}")
