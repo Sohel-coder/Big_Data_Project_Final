@@ -46,6 +46,7 @@ with tab1:
     year = st.slider("Select Year", min_value=years_int[0], max_value=years_int[-1], value=years_int[-1])
     ystr = str(year)
     df_year = df[["Country Name", "Country Code", ystr]].dropna(subset=[ystr])
+
     if df_year.empty:
         st.warning("No data for that year.")
     else:
@@ -54,16 +55,25 @@ with tab1:
             locations="Country Code",
             color=ystr,
             hover_name="Country Name",
-            hover_data={ystr:":.2f%"},
+            hover_data={ystr: ':.2f%'},  # Format value nicely
             projection="orthographic",
             color_continuous_scale=px.colors.sequential.Blues,
             range_color=(0, df_year[ystr].quantile(0.95)),
-            title=f"Defence Spending as % of GDP in {year}"
+            title=f"Defence Spending as % of GDP in {year}",
+            labels={ystr: "%GDP"}  # <-- 🛠️ This line fixes your label!
         )
+
+        # Update layout
         fig.update_layout(
             margin=dict(l=10, r=10, t=50, b=10),
-            geo=dict(bgcolor='rgba(0,0,0,0)', showland=True, landcolor="rgb(217,217,217)")
+            geo=dict(bgcolor='rgba(0,0,0,0)', showland=True, landcolor="rgb(217,217,217)"),
+            coloraxis_colorbar=dict(
+                title="% of GDP",
+                title_side="top",
+                ticks="outside",
+            )
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("---")
@@ -90,15 +100,27 @@ with tab2:
     india = data[data["Country Name"]=="India"]
     if not india.empty and "India" not in top10["Country Name"].values:
         top10 = pd.concat([top10, india])
+
     fig = px.bar(
         top10,
         x=col, y="Country Name",
         orientation="h",
         color=col,
         color_continuous_scale="Plasma",
-        title=f"Top 10 Spenders vs India in {year}"
+        title=f"Top 10 Spenders vs India in {year}",
+        labels={col: "% of GDP"}  # 🛠️ Added label to fix x-axis and colorbar!
     )
-    fig.update_layout(yaxis={'categoryorder':'total ascending'}, margin=dict(l=10,t=50))
+    fig.update_layout(
+        yaxis={'categoryorder':'total ascending'},
+        margin=dict(l=10, t=50),
+        coloraxis_colorbar=dict(
+            title="% of GDP",  # 🛠️ Title for the colorbar
+            title_side="top",
+            ticks="outside",
+        ),
+        xaxis_title="% of GDP"  # 🛠️ x-axis title changed
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
     if not india.empty:
@@ -147,6 +169,7 @@ with tab3:
     # Root node (1960–2020)
     all_years = [sel[str(y)].values[0] for y in range(1960, 2020)]
     root_avg = sum(all_years) / len(all_years)
+    root_sum = sum(all_years)
 
     decade_values = {}
     decade_averages = {}
@@ -154,26 +177,26 @@ with tab3:
         years = [str(y) for y in range(start, start + 10)]
         decade_label = f"{start}s"
         values = [year_values[y] for y in years]
-        decade_values[decade_label] = sum(values)
-        decade_averages[decade_label] = sum(values) / len(values)
-
-    root_value = sum(decade_values.values())
+        decade_values[decade_label] = sum(values)         # Sum for hierarchy
+        decade_averages[decade_label] = sum(values) / len(values)  # Average for color and hover
 
     # Build hierarchy
     sunburst_data.append({
         "id": "1960–2020",
         "label": "1960–2020",
         "parent": "",
-        "Spending": root_value,
+        "Value": root_sum,         # Sum is used for correct hierarchy
+        "%GDP": root_avg,          # Hover and color based on average
         "ColorMetric": root_avg
     })
 
-    for decade_label, dec_val in decade_values.items():
+    for decade_label, dec_sum in decade_values.items():
         sunburst_data.append({
             "id": decade_label,
             "label": decade_label,
             "parent": "1960–2020",
-            "Spending": dec_val,
+            "Value": dec_sum,
+            "%GDP": decade_averages[decade_label],
             "ColorMetric": decade_averages[decade_label]
         })
         start_year = int(decade_label[:4])
@@ -183,7 +206,8 @@ with tab3:
                 "id": y_str,
                 "label": y_str,
                 "parent": decade_label,
-                "Spending": year_values[y_str],
+                "Value": year_values[y_str],         # Use spending % for size
+                "%GDP": year_values[y_str],          # Same here for hover
                 "ColorMetric": year_values[y_str]
             })
 
@@ -195,10 +219,11 @@ with tab3:
         df_sunburst,
         names="label",
         parents="parent",
-        values="Spending",
+        values="Value",   # <- Sum is used to construct chart
         color="ColorMetric",
         color_continuous_scale="Blues",
-        branchvalues="total"
+        branchvalues="total",
+        hover_data={"%GDP": True, "parent": False, "ColorMetric": False, "Value": False}  # only %GDP shown
     )
 
     fig_sb.update_traces(
@@ -208,7 +233,10 @@ with tab3:
         maxdepth=2
     )
 
-    fig_sb.update_layout(margin=dict(t=10, b=10, l=10, r=10))
+    fig_sb.update_layout(
+        margin=dict(t=10, b=10, l=10, r=10),
+        coloraxis_colorbar=dict(title="% GDP")   # <<< Update color bar title
+    )
     st.plotly_chart(fig_sb, use_container_width=True)
 
     st.markdown("---")
@@ -239,30 +267,39 @@ with tab3:
         radii = trend["Spending"].values
         labels = trend["Year"].astype(str).tolist()
 
-        # Reduced figure size for smaller radial chart
         fig_r, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
 
+        norm = plt.Normalize(radii.min(), radii.max())
+        colors = plt.cm.viridis(norm(radii))
+
         bars = ax.bar(angles, radii, width=2*np.pi/len(angles), bottom=0.0,
-                      color=plt.cm.viridis(radii / max(radii)), edgecolor="black")
+                      color=colors, edgecolor="black")
 
         ax.set_xticks([])
         ax.set_yticklabels([])
 
+        # Place year labels slightly outside the bar
         for angle, label in zip(angles, labels):
             ax.plot([angle, angle], [0, max(radii) + 1], color="gray", linewidth=0.5, linestyle="--")
 
             rotation = np.degrees(angle)
-            alignment = 'center'
+            alignment = 'left'
             if 90 < rotation < 270:
                 rotation += 180
-                alignment = 'center'
+                alignment = 'right'
 
             ax.text(angle, max(radii) + 1.5, label,
                     rotation=rotation,
                     ha=alignment,
                     va='center',
-                    fontsize=8,
+                    fontsize=9,
                     rotation_mode='anchor')
+
+        # Colorbar
+        sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm)
+        sm.set_array([])
+        cbar = fig_r.colorbar(sm, ax=ax, pad=0.15, fraction=0.035, shrink=0.6)
+        cbar.ax.set_title('% of GDP', fontsize=10, pad=10)
 
         fig_r.tight_layout()
 
@@ -272,5 +309,12 @@ with tab3:
         plt.close()
 
     st.markdown("---")
+
+
+
+
+
+
+
 
 
