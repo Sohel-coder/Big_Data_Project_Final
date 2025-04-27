@@ -92,7 +92,7 @@ st.markdown(
     .stat-card {
       background:
         linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)),
-        url('https://your-statcard-texture.png') no-repeat center center;
+        url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
       background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
@@ -121,7 +121,7 @@ st.markdown(
     .feature-card {
       background:
         linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-        url('https://your-feature-background.jpg') no-repeat center center;
+        url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
       background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
