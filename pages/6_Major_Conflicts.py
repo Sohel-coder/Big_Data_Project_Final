@@ -371,7 +371,7 @@ if war:
             fig.add_annotation(
                 x=year,
                 y=max_gdp,
-                text=f"{war} ({year})",
+                text=f"{war}",
                 showarrow=True,
                 arrowhead=2,
                 ay=-40
