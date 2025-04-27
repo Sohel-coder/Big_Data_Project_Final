@@ -119,11 +119,11 @@ with tab2:
     st.markdown("---")
     india_trend = (
         df[df["Country Name"]=="India"]
-        .melt(id_vars="Country Name", value_vars=year_columns, var_name="Year", value_name="PctGDP")
+        .melt(id_vars="Country Name", value_vars=year_columns, var_name="Year", value_name="% GDP")
         .dropna()
     )
     if not india_trend.empty:
-        fig2 = px.line(india_trend, x="Year", y="PctGDP",
+        fig2 = px.line(india_trend, x="Year", y="% GDP",
                        title="India's Spending (% GDP) Over Time")
         st.plotly_chart(fig2, use_container_width=True)
 
