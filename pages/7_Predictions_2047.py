@@ -10,7 +10,7 @@ st.set_page_config(page_title="Top Military Powers Prediction 2047", layout="wid
 
 st.title("Top Military Powers Prediction for 2047")
 
-# ─── GLOBAL CSS ────────────────────────────────────────────────────────────────
+# ─── INJECT GLOBAL CSS ─────────────────────────────────────────────────────────
 st.markdown(
     """
     <style>
@@ -19,6 +19,10 @@ st.markdown(
       background: url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg')
                   no-repeat center center fixed;
       background-size: cover;
+    }
+    /* Translucent sidebar */
+    [data-testid="stSidebar"] {
+      background-color: rgba(0, 0, 0, 0.6);
     }
     /* Centered hero text */
     .css-1lcbmhc {
@@ -29,7 +33,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # Load data
 @st.cache_data
