@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 # --- Load and filter data ---
 @st.cache_data
 def load_data():
-    df = pd.read_excel("Military_Expenditure_final_rounded.xlsx")
+    df = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
     df = df[df['Indicator Name'] == 'Military expenditure (current USD)']
     return df
 
