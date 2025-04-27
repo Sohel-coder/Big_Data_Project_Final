@@ -3,6 +3,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+# --- App config and title ---
+st.set_page_config(page_title="Military Expenditure Dashboard", layout="wide")
+st.title("🌍 Military Expenditure Visualization (1960–2018)")
+
 # ─── INJECT GLOBAL CSS ─────────────────────────────────────────────────────────
 st.markdown(
     """
@@ -48,9 +52,6 @@ if df.empty:
     st.error("❌ No entries with Type='Country'.")
     st.stop()
 
-# --- App config and title ---
-st.set_page_config(page_title="Military Expenditure Dashboard", layout="wide")
-st.title("🌍 Military Expenditure Visualization (1960–2018)")
 
 years_all = [str(y) for y in range(1960, 2019)]
 all_countries = sorted(df['Name'].unique())
