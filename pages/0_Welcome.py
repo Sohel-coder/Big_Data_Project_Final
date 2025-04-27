@@ -1,185 +1,215 @@
 import streamlit as st
-st.set_page_config(page_title="Welcome to the Art of War", layout="wide")
-
 import pandas as pd
 
+# ─── PAGE CONFIG ───────────────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="🎖️ Art of War – Welcome",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ─── DATA LOAD ─────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_strength():
-    return pd.read_csv("data/2024_military_strength_by_country.csv")
+    # adjust path as needed
+    return pd.read_csv("2024_military_strength_by_country.csv")
 
 military_strength = load_strength()
 
-# ——— Custom CSS ———
-st.markdown("""
-<style>
-  /* Hero section */
-  .welcome-container {
-    position: relative;
-    background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)),
-                url('https://www.armyrecognition.com/images/stories/north_america/united_states/military_equipment/uh-60_black_hawk/UH-60_Black_Hawk_United_States_US_American_army_aviation_helicopter_001.jpg')
-                center/cover no-repeat;
-    border-radius: 12px;
-    padding: 3rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-  }
-  .welcome-title {
-    font-size: 3rem;
-    color: #1E3A8A;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-  .welcome-text {
-    font-size: 1.2rem;
-    color: #333;
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto 2rem;
-    line-height: 1.6;
-  }
+# ─── GLOBAL STATS ──────────────────────────────────────────────────────────────
+total_countries = len(military_strength)
+# pick a top power for display
+filtered = military_strength.sort_values('pwr_index', ascending=True)
+top_power = filtered.iloc[0]['country'] if not filtered.empty else "N/A"
 
-  /* Stats cards */
-  .stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-  }
-  .stat-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform .2s;
-  }
-  .stat-card:hover {
-    transform: translateY(-4px);
-  }
-  .stat-value {
-    font-size: 2.2rem;
-    color: #1E3A8A;
-    font-weight: 700;
-    margin-bottom: .5rem;
-  }
-  .stat-label {
-    font-size: 1rem;
-    color: #555;
-    font-weight: 500;
-  }
+try:
+    total_budget = (
+        pd.to_numeric(filtered['national_annual_defense_budgets'], errors='coerce')
+        .sum()
+    )
+    formatted_budget = f"${total_budget/1e12:.2f}T"
+except:
+    formatted_budget = "Data unavailable"
 
-  /* Feature grid */
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-    gap: 1.5rem;
-    margin: 3rem 0;
-  }
-  .feature-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: transform .2s;
-    border-left: 4px solid #4F46E5;
-  }
-  .feature-card:hover {
-    transform: translateY(-4px);
-  }
-  .feature-title {
-    font-size: 1.2rem;
-    color: #4F46E5;
-    font-weight: 600;
-    margin-bottom: .5rem;
-  }
-  .feature-desc {
-    font-size: 0.95rem;
-    color: #444;
-    line-height: 1.4;
-  }
+# ─── INJECT CSS ────────────────────────────────────────────────────────────────
+st.markdown(
+    """
+    <style>
+    /* Full-screen war-scene background */
+    .stApp {
+      background: url('https://static.vecteezy.com/system/resources/previews/027/103/278/non_2x/silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities-free-photo.jpg')
+                  no-repeat center center fixed;
+      background-size: cover;
+    }
+    /* Translucent sidebar */
+    [data-testid="stSidebar"] {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    /* Centered hero text */
+    .css-1lcbmhc {
+      text-align: center !important;
+      padding: 1rem !important;
+    }
 
-  /* Button */
-  .get-started {
-    display: block;
-    background: linear-gradient(135deg,#4F46E5,#1E40AF);
-    color: #fff !important;
-    text-align: center;
-    padding: .75rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin: 2rem auto 0;
-    width: 200px;
-    cursor: pointer;
-    transition: background .2s;
-    text-decoration: none;
-  }
-  .get-started:hover {
-    background: linear-gradient(135deg,#1E40AF,#4F46E5);
-  }
-</style>
-""", unsafe_allow_html=True)
+    /* Theme colors */
+    :root {
+      --primary-color: #1E3A8A;
+      --secondary-color: #991B1B;
+      --text-color: #1E293B;
+      --accent-color: #4F46E5;
+    }
 
-# ——— Hero ———
+    /* Welcome “card” */
+    .welcome-container {
+      background-color: rgba(255,255,255,0.85);
+      border-radius: 15px;
+      padding: 2rem;
+      margin: 2rem auto;
+      max-width: 800px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .welcome-title {
+      color: var(--primary-color);
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .welcome-text {
+      color: var(--text-color);
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    /* Stats grid */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.9);
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--accent-color);
+      transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+    .feature-title {
+      color: var(--primary-color);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .feature-description {
+      color: var(--text-color);
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ─── WELCOME LAYOUT ────────────────────────────────────────────────────────────
 st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
-st.markdown('<h1 class="welcome-title">Military Data Analysis Platform</h1>', unsafe_allow_html=True)
-st.markdown('''
-  <p class="welcome-text">
-    Explore comprehensive analysis of global military powers, defense budgets, and international trade data
-    through interactive visualizations and detailed comparisons.
-  </p>
+
+st.markdown(
+    '<h1 class="welcome-title">🎖️ Art of War – Military Data Analysis</h1>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<p class="welcome-text">'
+    'Explore global defense budgets, military strengths, trade flows, and more—'
+    'all in one place.'
+    '</p>',
+    unsafe_allow_html=True,
+)
+
+# Stats
+st.markdown('<div class="stats-container">', unsafe_allow_html=True)
+st.markdown(f'''
+  <div class="stat-card">
+    <div class="stat-value">{total_countries}</div>
+    <div class="stat-label">Countries Analyzed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{top_power}</div>
+    <div class="stat-label">Top Military Power</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{formatted_budget}</div>
+    <div class="stat-label">Global Defense Spending</div>
+  </div>
 ''', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ——— Compute stats ———
-total_countries = military_strength['country'].nunique()
-fs = military_strength.query("country != 'Afghanistan'").sort_values('pwr_index')
-top_power = fs.iloc[0]['country'] if not fs.empty else "N/A"
-try:
-    total_budget = fs['national_annual_defense_budgets'].astype(float).sum()
-    formatted_budget = f"${total_budget/1e12:.2f}T"
-except:
-    formatted_budget = "Unavailable"
-
-# ——— Stats cards ———
-st.markdown('<div class="stats-container">', unsafe_allow_html=True)
-for val, label in [
-    (total_countries, "Countries Analyzed"),
-    (top_power, "Top Military Power"),
-    (formatted_budget, "Global Defense Spending")
-]:
-    st.markdown(f'''
-      <div class="stat-card">
-        <div class="stat-value">{val}</div>
-        <div class="stat-label">{label}</div>
-      </div>
-    ''', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ——— Feature grid ———
-st.markdown('<h2 style="text-align:center;color:#1E3A8A;margin-top:2rem;">What You Can Do</h2>', unsafe_allow_html=True)
-st.markdown('<div class="feature-grid">', unsafe_allow_html=True)
-for title, desc in [
-    ("Military Strength Comparison",
-     "Compare personnel, equipment & power index across countries."),
-    ("Defense Budget Trends",
-     "Visualize military spend as % of GDP over time."),
-    ("Defense Companies",
-     "Analyze top contractors & their market share."),
-    ("Trade Data",
-     "Explore global arms export/import flows."),
-    ("2047 Forecast",
-     "See projected top military powers by mid-century.")
-]:
-    st.markdown(f'''
+# Features
+st.markdown('<h2 style="text-align:center; color:var(--primary-color);">What You Can Explore</h2>', unsafe_allow_html=True)
+st.markdown(
+    '''
+    <div class="feature-grid">
       <div class="feature-card">
-        <div class="feature-title">{title}</div>
-        <div class="feature-desc">{desc}</div>
+        <div class="feature-title">Military Strength</div>
+        <div class="feature-description">
+          Compare personnel, equipment and power indices across countries.
+        </div>
       </div>
-    ''', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+      <div class="feature-card">
+        <div class="feature-title">Defense Budgets</div>
+        <div class="feature-description">
+          Track spending trends over time (% of GDP & absolute).
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">Trade Data</div>
+        <div class="feature-description">
+          Visualize arms exports & imports globally.
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">2047 Projections</div>
+        <div class="feature-description">
+          See predicted top military powers based on current trajectories.
+        </div>
+      </div>
+    </div>
+    ''',
+    unsafe_allow_html=True,
+)
 
-# ——— Get Started button ———
-if st.button("Begin Analysis"):
-    st.experimental_set_query_params(page="strength")
+# “Get started” button (navigates to main page)
+if st.button("🔍 Begin Analysis", use_container_width=True):
+    st.experimental_set_query_params(page="Military Strength")
+
+st.markdown('</div>', unsafe_allow_html=True)
