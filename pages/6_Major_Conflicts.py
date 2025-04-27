@@ -338,32 +338,45 @@ if war:
     tab = st.radio("📂 Select Section:", ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], horizontal=True)
 
     if tab=="📊 Budget Trends":
-        st.subheader(f"📈 Defense Budget Trends Around {war}")
-        if 'India' in info['countries']:
-            budget_india = budget_df[budget_df["Country Name"]=="India"]
-            exp_india    = exp_df[exp_df["Name"]=="India"]
-            years        = [str(y) for y in range(year-2, year+3)]
-            gdp_df       = budget_india[years].T.reset_index()
-            gdp_df.columns = ["Year","% of GDP"]
-            usd_df       = exp_india[years].T.reset_index()
-            usd_df.columns = ["Year","Expenditure (USD)"]
-            merged       = pd.merge(gdp_df,usd_df,on="Year")
-            merged["Year"] = merged["Year"].astype(int)
+        st.subheader(f"📈 Defence Budget (% of GDP) Around {war}")
 
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=merged["Year"], y=merged["% of GDP"], name="% of GDP", mode='lines+markers'))
-            fig.add_trace(go.Scatter(x=merged["Year"], y=merged["Expenditure (USD)"], name="Expenditure (USD)", mode='lines+markers', yaxis="y2"))
-            fig.add_vline(x=year, line_color="red", line_dash="dash")
-            fig.update_layout(
-                xaxis_title="Year",
-                yaxis=dict(title="% of GDP"),
-                yaxis2=dict(title="Expenditure (USD)", overlaying="y", side="right"),
-                hovermode="x unified",
-                template="plotly_white"
-            )
-            st.plotly_chart(fig,use_container_width=True)
-        else:
-            st.info("📊 No defense budget data available for this country.")
+        # we’ll look two years either side of the conflict year
+        years = [str(y) for y in range(year-2, year+3)]
+        fig = go.Figure()
+
+        # add one %-of-GDP line per country in the conflict
+        for country in info['countries']:
+            df_country = budget_df[budget_df["Country Name"]==country]
+            if df_country.empty:
+                continue
+            gdp_df = df_country[years].T.reset_index()
+            gdp_df.columns = ["Year","% of GDP"]
+            gdp_df["Year"] = gdp_df["Year"].astype(int)
+
+            fig.add_trace(go.Scatter(
+                x=gdp_df["Year"],
+                y=gdp_df["% of GDP"],
+                mode="lines+markers",
+                name=country
+            ))
+
+        # force integer‐year ticks, tidy up
+        fig.update_xaxes(
+            tickmode="linear",
+            dtick=1,
+            tickformat="d",
+            title_text="Year"
+        )
+        fig.update_yaxes(
+            title_text="% of GDP"
+        )
+        fig.update_layout(
+            hovermode="x unified",
+            template="plotly_white",
+            margin=dict(l=20,r=20,t=40,b=20)
+        )
+
+    st.plotly_chart(fig, use_container_width=True)
 
     elif tab=="🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
