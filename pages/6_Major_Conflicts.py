@@ -51,7 +51,9 @@ conflicts = {
             {"date":"Nov 20, 1962","event":"China declares ceasefire."}
         ],
         'troop_movements': [
-            {"from":{"lat":29,"lon":94},"to":{"lat":35,"lon":80}}
+            {"from": {"lat": 35.30, "lon": 77.05}, "to": {"lat": 33.03, "lon": 78.42}},  # Karakoram → Chushul
+            {"from": {"lat": 35.20, "lon": 80.00}, "to": {"lat": 34.53, "lon": 78.92}},  # Aksai Chin → Galwan
+            {"from": {"lat": 35.20, "lon": 80.00}, "to": {"lat": 33.56, "lon": 78.33}},  # Aksai Chin → Pangong
         ]
     },
     'Indo-Pakistan War (1965)': {
@@ -438,139 +440,124 @@ if war:
             st.info("🪖 Military strength data not available for this conflict.")
 
     else:
-        st.subheader("🗺️ Conflict Map & 5-Step Troop Movements")
+        # ── Continuous‐Route Map Animation ──
 
-        # pick exactly 5 events from origin → end
-        evs=info['events']
+        # Prepare timeline labels
+        evs = info['events']
         if len(evs)>=5:
-            idxs = np.linspace(0,len(evs)-1,5,dtype=int)
+            idxs = np.linspace(0, len(evs)-1, 5, dtype=int)
             sel_evs = [evs[i] for i in idxs]
         else:
             sel_evs = evs + [{"date":"","event":""}]*(5-len(evs))
 
-        # interpolate 5 positions
-        f=info['troop_movements'][0]['from']
-        t=info['troop_movements'][0]['to']
-        lats=np.linspace(f['lat'],t['lat'],5)
-        lons=np.linspace(f['lon'],t['lon'],5)
-        positions=[{"lat":lat,"lon":lon} for lat,lon in zip(lats,lons)]
+        # Build the full polyline: start of first, then every 'to'
+        movements = info['troop_movements']
+        full_route = [movements[0]['from']] + [m['to'] for m in movements]
 
-        map_ph=st.empty()
-        txt_ph=st.empty()
-        play=st.checkbox("▶️ Play Animation")
-        def render(i):
-            origin = positions[0]
-            terminus = positions[-1]
+        N_STEPS = 5
+        M = len(movements)
 
-            # reverse geocode start/end
-            start_name = get_location_name(origin["lat"], origin["lon"])
-            end_name   = get_location_name(terminus["lat"], terminus["lon"])
+        map_ph = st.empty()
+        txt_ph = st.empty()
+        play = st.checkbox("▶️ Play Animation")
+
+        def compute_position(step):
+            # step in [0..N_STEPS-1] → u in [0..M]
+            u = (step/(N_STEPS-1)) * M
+            seg = min(int(u), M-1)
+            frac = u - seg
+            o = movements[seg]['from']
+            d = movements[seg]['to']
+            lat = o['lat'] + frac*(d['lat'] - o['lat'])
+            lon = o['lon'] + frac*(d['lon'] - o['lon'])
+            return {"lat":lat, "lon":lon}, seg
+
+        def render(step):
+            # compute moving point + segment index
+            pos, seg_idx = compute_position(step)
 
             layers = []
-
-            # 🟢 START marker
-            df_start = pd.DataFrame([{
-                "lat": origin["lat"],
-                "lon": origin["lon"],
-                "label": f"🟢 {start_name} — {sel_evs[0]['date']}"
+            # 1) full grey route
+            df_full = pd.DataFrame(full_route)
+            layers.append(pdk.Layer(
+                "LineLayer", data=df_full,
+                get_source_position="[lon, lat]",
+                get_target_position="[lon, lat]",
+                get_width=2,
+                get_color='[160,160,160,120]'
+            ))
+            # 2) travelled portion (thick)
+            partial = full_route[:seg_idx+1] + [pos]
+            df_part = pd.DataFrame(partial)
+            layers.append(pdk.Layer(
+                "LineLayer", data=df_part,
+                get_source_position="[lon, lat]",
+                get_target_position="[lon, lat]",
+                get_width=6,
+                get_color='[255,0,0,200]'
+            ))
+            # 3) moving marker
+            df_move = pd.DataFrame([{
+                "lat": pos['lat'], "lon": pos['lon'],
+                "label": f"🔵 {sel_evs[step]['date']}"
             }])
             layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_start,
+                "ScatterplotLayer", data=df_move,
                 get_position='[lon, lat]',
-                get_color='[0, 255, 0, 200]',
-                get_radius=30000, pickable=True
+                get_color='[0,0,255,200]',
+                get_radius=20000,
+                pickable=True
             ))
-
-            # 🔴 END marker
-            df_end = pd.DataFrame([{
-                "lat": terminus["lat"],
-                "lon": terminus["lon"],
-                "label": f"🔴 {end_name} — {sel_evs[-1]['date']}"
-            }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_end,
-                get_position='[lon, lat]',
-                get_color='[255, 0, 0, 200]',
-                get_radius=30000, pickable=True
-            ))
-
-            # fixed sector markers (unchanged)
+            # 4) fixed sector markers
             if war in additional_movements:
                 df_sec = pd.DataFrame(additional_movements[war])
                 layers.append(pdk.Layer(
                     "ScatterplotLayer", data=df_sec,
                     get_position='[lon, lat]',
-                    get_color='[0, 200, 200, 150]',
-                    get_radius=15000, pickable=True
+                    get_color='[0,200,200,150]',
+                    get_radius=15000,
+                    pickable=True
                 ))
 
-            # path up to this step
-            if i > 0:
-                df_line = pd.DataFrame([{
-                    "start_lon": positions[i-1]['lon'],
-                    "start_lat": positions[i-1]['lat'],
-                    "end_lon":   positions[i]['lon'],
-                    "end_lat":   positions[i]['lat']
-                }])
-                layers.append(pdk.Layer(
-                    "LineLayer", data=df_line,
-                    get_source_position="[start_lon, start_lat]",
-                    get_target_position="[end_lon, end_lat]",
-                    get_width=4
-                ))
-
-            # 🔵 moving marker
-            df_move = pd.DataFrame([{
-                "lat": positions[i]['lat'],
-                "lon": positions[i]['lon'],
-                "label": f"🔵 {sel_evs[i]['date']}"
-            }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_move,
-                get_position='[lon, lat]',
-                get_color='[0, 0, 255, 180]',
-                get_radius=20000, pickable=True
-            ))
-
-            # render deck
+            # render map
+            center_lat = np.mean([p['lat'] for p in full_route])
+            center_lon = np.mean([p['lon'] for p in full_route])
             deck = pdk.Deck(
                 map_style="mapbox://styles/mapbox/satellite-streets-v11",
                 initial_view_state=pdk.ViewState(
-                    latitude=(origin["lat"] + terminus["lat"])/2,
-                    longitude=(origin["lon"] + terminus["lon"])/2,
-                    zoom=5, pitch=45
+                    latitude=center_lat, longitude=center_lon, zoom=6, pitch=45
                 ),
                 layers=layers,
-                tooltip={"text": "{label}"}
+                tooltip={"text":"{label}"}
             )
             map_ph.pydeck_chart(deck)
 
-        # ─── Legend ───
+        # Legend
         st.markdown("""
-        <div style="background:#fff;padding:8px;border-radius:4px;display:inline-block;">
-        <span style="color:green;">🟢 Start Point</span> – origin of the war<br>
-        <span style="color:red;">🔴 End Point</span> – where the war ended
+        <div style="background:#fff;padding:6px;border-radius:4px;display:inline-block;">
+          <span style="color:gray;">— Full Route</span>  
+          <span style="color:red;">— Travelled</span>  
+          <span style="color:blue;">🔵 Now</span>
         </div>
         """, unsafe_allow_html=True)
 
         if play:
-            for i, ev in enumerate(sel_evs):
-                txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
+            for i in range(N_STEPS):
+                txt_ph.markdown(f"**{sel_evs[i]['date']}** — {sel_evs[i]['event']}")
                 render(i)
                 time.sleep(1)
         else:
-            step=st.slider("Step",0,4,0)
-            ev=sel_evs[step]
-            txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
+            step = st.slider("Step", 0, N_STEPS-1, 0)
+            txt_ph.markdown(f"**{sel_evs[step]['date']}** — {sel_evs[step]['event']}")
             render(step)
 
-        # ── Outcome & Impacts ──
+        # Outcome & Impacts
         st.markdown("### 🏁 Outcome")
         for line in info['outcome'].split(';'):
             st.markdown(f"- {line.strip()}")
         st.markdown("#### 📌 Impacts on Indian Defence")
-        for point in impacts_on_india.get(war, []):
-            st.markdown(f"- {point}")
-            
+        for pt in impacts_on_india.get(war, []):
+            st.markdown(f"- {pt}")
+
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
