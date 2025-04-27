@@ -59,7 +59,7 @@ st.markdown(
 
     /* Welcome “card” */
     .welcome-container {
-      background-color: rgba(0,0,0,0);
+      background-color: rgba(0,0,0,1);
       border-radius: 15px;
       padding: 2rem;
       margin: 2rem auto;
@@ -89,7 +89,7 @@ st.markdown(
       margin-bottom: 2rem;
     }
     .stat-card {
-      background: rgba(0,0,0,0);    /* make this translucent */
+      background: rgba(0,0,0,1);    /* make this translucent */
       padding: 1.5rem;
       border-radius: 10px;
       text-align: center;
@@ -113,7 +113,7 @@ st.markdown(
       gap: 1.5rem;
     }
     .feature-card {
-      background: rgba(0,0,0,0);    /* make this translucent */
+      background: rgba(0,0,0,1);    /* make this translucent */
       padding: 1.5rem;
       border-radius: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.8);
