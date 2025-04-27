@@ -36,7 +36,7 @@ st.markdown(
     <style>
     /* Full-screen war-scene background */
     .stApp {
-      background: url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg')
+      background: url('https://as1.ftcdn.net/v2/jpg/08/06/91/92/1000_F_806919202_HHI0NY4rRWARQm8FX12WHFL1gZRGs3jR.jpg')
                   no-repeat center center fixed;
       background-size: cover;
     }
