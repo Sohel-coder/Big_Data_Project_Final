@@ -10,6 +10,31 @@ from geopy.geocoders import Nominatim
 st.set_page_config(page_title="Military Conflicts", layout="wide") 
 st.title("🛡️ Global Military Conflicts Dashboard (1960–2020)")
 
+# ─── INJECT GLOBAL CSS ─────────────────────────────────────────────────────────
+st.markdown(
+    """
+    <style>
+    /* Full-screen war-scene background */
+    .stApp {
+      background: url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg')
+                  no-repeat center center fixed;
+      background-size: cover;
+    }
+    /* Translucent sidebar */
+    [data-testid="stSidebar"] {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    /* Centered hero text */
+    .css-1lcbmhc {
+      text-align: center !important;
+      padding: 1rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 st.markdown(
     """
     This dashboard provides an overview of major military conflicts from 1960 to 2020, including their locations, troop movements, and outcomes.
