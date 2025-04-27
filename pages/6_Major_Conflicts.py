@@ -387,7 +387,7 @@ if war:
                 x=[data[c]['Personnel'] for c in data],
                 orientation='h',
                 marker_color='steelblue',
-                width=0.4
+                width=0.25
             ))
             fig_pers.update_layout(
                 title="Personnel Strength",
@@ -407,7 +407,7 @@ if war:
                     x=[data[country][cat] for cat in cats],
                     orientation='h',
                     name=country,
-                    width=0.4
+                    width=0.25
                 ))
             fig_eq.update_layout(
                 barmode='group',
