@@ -13,13 +13,25 @@ df = load_data()
 
 st.title("💼 Defense Companies Analysis (2005–2020)")
 
-# Sidebar filters
-st.sidebar.header("🔎 Filters")
+# --- In-Page Filters ---
+st.markdown("### 🔎 Filters")
 years = sorted(df["Year"].unique())
-year_selected = st.sidebar.selectbox("Select Year", years, index=len(years)-1)
-top_n = st.sidebar.slider("Top N Companies", min_value=5, max_value=30, value=10)
+year_selected = st.selectbox(
+    "Select Year",
+    years,
+    index=len(years) - 1
+)
+top_n = st.slider(
+    "Top N Companies",
+    min_value=5,
+    max_value=30,
+    value=10
+)
 all_companies = sorted(df["Company"].unique())
-selected_companies = st.sidebar.multiselect("Select Companies for Trend", all_companies)
+selected_companies = st.multiselect(
+    "Select Companies for Trend",
+    all_companies
+)
 
 # Filter dataset
 df_filtered = df[df["Year"] == year_selected]
@@ -52,14 +64,12 @@ fig_top_animated = px.bar(
 )
 
 fig_top_animated.update_layout(
-    xaxis=dict(range=[0, max_revenue]),  # 👈 Fixed X-axis
+    xaxis=dict(range=[0, max_revenue]),
     yaxis={'categoryorder': 'total ascending'},
     margin=dict(t=40, l=0, r=0, b=0),
 )
 
 st.plotly_chart(fig_top_animated, use_container_width=True)
-
-
 
 ######################################################################################################################
 
@@ -89,11 +99,21 @@ st.subheader("🌞 Interactive Sunburst: Country → Company")
 
 col1, col2 = st.columns(2)
 with col1:
-    num_countries = st.number_input("Number of Top Countries", min_value=1, max_value=20, value=5)
+    num_countries = st.number_input(
+        "Number of Top Countries",
+        min_value=1,
+        max_value=20,
+        value=5
+    )
 with col2:
-    num_companies = st.number_input("Number of Top Companies per Country", min_value=1, max_value=20, value=3)
+    num_companies = st.number_input(
+        "Number of Top Companies per Country",
+        min_value=1,
+        max_value=20,
+        value=3
+    )
 
-# Step 1: Get top N countries by total defense revenue
+# Step 1: Get top N countries by total defense revenue in the selected year
 top_countries = (
     df_filtered.groupby("Country")["Defense_Revenue_From_A_Year_Ago"]
     .sum()
@@ -124,29 +144,26 @@ fig_sunburst = px.sunburst(
     values="Defense_Revenue_From_A_Year_Ago",
     color="Country",
     title="Top Countries and Leading Defense Companies (Sunburst)",
-    maxdepth=2  # 👈 This ensures only Country level is visible at first
+    maxdepth=2
 )
 
-# Optional: Layout tweaks (for margin and colors)
 fig_sunburst.update_layout(
     margin=dict(t=40, l=0, r=0, b=0),
     sunburstcolorway=px.colors.qualitative.Pastel,
     extendsunburstcolors=True,
 )
 
-# Show the chart
 st.plotly_chart(fig_sunburst, use_container_width=True)
-
-
 
 ######################################################################################################################################
 
-#4. Animated Bubble chart
-
+#4. Animated Bubble Chart
 st.subheader("🎥 Animated Bubble Chart: Company Revenue Evolution (2005–2020)")
 
-# Optional: Let user choose number of top companies to display over time
-top_n_bubble = st.slider("Top N Companies per Year (for animation)", 5, 30, 15)
+top_n_bubble = st.slider(
+    "Top N Companies per Year (for animation)",
+    5, 30, 15
+)
 
 # Prepare data: pick top N companies per year by defense revenue
 animated_df = (
@@ -159,7 +176,8 @@ animated_df = (
 )
 
 # Get top N companies for each year
-animated_df["rank"] = animated_df.groupby("Year")["Defense_Revenue_From_A_Year_Ago"].rank("dense", ascending=False)
+animated_df["rank"] = animated_df.groupby("Year")["Defense_Revenue_From_A_Year_Ago"]\
+    .rank("dense", ascending=False)
 animated_df = animated_df[animated_df["rank"] <= top_n_bubble]
 
 # Bubble chart with animation
@@ -184,12 +202,7 @@ fig_bubble = px.scatter(
 fig_bubble.update_layout(margin=dict(t=40, l=0, r=0, b=0))
 st.plotly_chart(fig_bubble, use_container_width=True)
 
-
-
-
 ######################################################################################################################
-
-
 
 # 5. Expandable Raw Data
 with st.expander("📄 View Raw Data"):
