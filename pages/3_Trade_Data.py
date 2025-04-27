@@ -435,12 +435,32 @@ if compare_countries:
         template="plotly_white"
     )
     fig_exp.update_layout(
-        xaxis=dict(tickmode="linear", tick0=comp_df["year"].min(), dtick=1),
-        yaxis=dict(title_font=dict(color="#333333"), tickfont=dict(color="#333333")),
-        legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        xaxis=dict(
+            title="Year",
+            title_font=dict(color="white"),
+            tickmode="linear",
+            tick0=comp_df["year"].min(),
+            dtick=1,
+            tickfont=dict(color="white")
+        ),
+        yaxis=dict(
+            title="Exports (Mil USD)",
+            title_font=dict(color="white"),
+            tickfont=dict(color="white")
+        ),
+        legend=dict(
+            title="",
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        plot_bgcolor='#F0F8FF',
+        paper_bgcolor='#F0F8FF'
     )
     st.plotly_chart(fig_exp, use_container_width=True)
-
+    
     # Imports timeline
     fig_imp = px.line(
         comp_df,
@@ -453,9 +473,29 @@ if compare_countries:
         template="plotly_white"
     )
     fig_imp.update_layout(
-        xaxis=dict(tickmode="linear", tick0=comp_df["year"].min(), dtick=1),
-        yaxis=dict(title_font=dict(color="#333333"), tickfont=dict(color="#333333")),
-        legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        xaxis=dict(
+            title="Year",
+            title_font=dict(color="white"),
+            tickmode="linear",
+            tick0=comp_df["year"].min(),
+            dtick=1,
+            tickfont=dict(color="white")
+        ),
+        yaxis=dict(
+            title="Imports (Mil USD)",
+            title_font=dict(color="white"),
+            tickfont=dict(color="white")
+        ),
+        legend=dict(
+            title="",
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        plot_bgcolor='#F0F8FF',
+        paper_bgcolor='#F0F8FF'
     )
     st.plotly_chart(fig_imp, use_container_width=True)
 else:
