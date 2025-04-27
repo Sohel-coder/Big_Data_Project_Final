@@ -1,156 +1,179 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.express as px
-from matplotlib.ticker import StrMethodFormatter  # for x-axis formatting
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import numpy as np
 
-st.set_page_config(page_title="Military Expenditure", layout="wide")
+st.set_page_config(page_title="🌍 Military Dashboard", layout="wide", page_icon="🌏")
 
-st.title("🌍 Military Expenditure Visualization (1960–2018)")
-st.markdown(
-    """
-    This section provides insights into military expenditure trends across various countries 
-    from 1960 to 2018. You can visualize the data through line charts, bar charts, 
-    and a global map via the tabs below.
-    """
-)
-
+# Load dataset
 @st.cache_data
 def load_data():
-    df = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
-    df = df[df['Indicator Name'] == 'Military expenditure (current USD)']
+    df = pd.read_csv("military_data.csv")
     return df
 
 df = load_data()
+numeric_cols = df.select_dtypes(include='number').columns.tolist()
+country_list = df['country'].unique().tolist()
 
-# sanity checks
-if df.columns[2] != "Type" or df["Type"].iloc[0] != "Country":
-    st.error("❌ Data must have a third column named 'Type' with value 'Country'.")
-    st.stop()
+# Main title
+st.markdown("""
+    <h1 style='text-align: center; color: #2E8B57;'>
+        🌏 Global Military Power Interactive Dashboard
+    </h1>
+""", unsafe_allow_html=True)
 
-years_all = [str(y) for y in range(1960, 2019)]
-all_countries = sorted(df['Name'].unique())
-default_countries = ['United States', 'China', 'Russian Federation']
-
-# create three tabs
-tab1, tab2, tab3 = st.tabs([
-    "📈 Custom Trends",
-    "💰 Top & Bottom Spenders",
-    "🗺️ Global Map"
+# Sidebar Navigation
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/1035/1035529.png", width=100)
+module = st.sidebar.radio("Choose a Module", [
+    "Country Profile Explorer",
+    "Choropleth Map",
+    "Compare Countries",
+    "Top-N Ranking Tool",
+    "Correlation Explorer"
 ])
 
-with tab1:
-    st.header("Custom Expenditure Trends")
-    countries = st.multiselect(
-        "Select countries to visualize:",
-        options=all_countries,
-        default=[c for c in default_countries if c in all_countries]
-    )
-    year_range = st.slider(
-        "Select year range:",
-        min_value=1960, max_value=2018, value=(1990, 2018)
+st.sidebar.markdown("<hr style='border:1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Module 1: Country Profile Explorer
+if module == "Country Profile Explorer":
+    st.header("🔍 Country Profile Explorer")
+        
+    country = st.selectbox("Select a country:", sorted(df['country'].unique()))
+    row = df[df['country'] == country].iloc[0]
+
+    st.markdown("### 📌 General Information")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Active Personnel", f"{int(row['Active Personnel']):,}")
+        st.metric("Reserve Personnel", f"{int(row['Reserve Personnel']):,}")
+        st.metric("Paramilitary", f"{int(row['Paramilitary']):,}")
+        st.metric("Defense Budget (USD)", f"${int(row['Defense Budget']):,}")
+    with col2:
+        st.metric("Total Aircraft Strength", f"{int(row['Total Aircraft Strength']):,}")
+        st.metric("Tanks", f"{int(row['Tanks']):,}")
+        st.metric("Oil Production (Barrels/day)", f"{int(row['Oil Production']):,}")
+        st.metric("External Debt (USD)", f"${int(row['External Debt']):,}")
+
+    # Bar Chart for selected attributes (Normalized for better comparison)
+    st.subheader("📊 Military Metrics Overview (Normalized Bar Chart)")
+    bar_attrs = ['Active Personnel', 'Total Aircraft Strength', 'Tanks', 'Oil Production', 'Defense Budget']
+
+    # Extract values safely
+    # Extract values safely
+    bar_values = [0 if pd.isna(row.get(attr)) else row.get(attr) for attr in bar_attrs]
+
+    # Normalize using log scale
+    log_values = [np.log1p(val) for val in bar_values]
+    min_log = min(log_values)
+    max_log = max(log_values)
+    if max_log != min_log:
+        normalized_values = [(val - min_log) / (max_log - min_log) for val in log_values]
+    else:
+        normalized_values = [1 for _ in log_values]
+
+    bar_df = pd.DataFrame({
+        'Metric': bar_attrs,
+        'Normalized Value': normalized_values,
+        'Original Value': bar_values
+    }).sort_values(by='Normalized Value', ascending=True)
+
+    fig = px.bar(
+        bar_df,
+        x='Normalized Value',
+        y='Metric',
+        orientation='h',
+        labels={'Normalized Value': 'Normalized Score', 'Metric': 'Military Metric'},
+        title=f"{country} - Normalized Military Metrics",
+        template='plotly_dark',
+        color='Metric',
+        color_discrete_sequence=px.colors.qualitative.Set2,
+        hover_data=['Original Value']
     )
 
-    if countries:
-        df_sel = (
-            df[df['Name'].isin(countries)]
-             [['Name'] + years_all]
-             .set_index('Name')
-             .transpose()
+    st.plotly_chart(fig, use_container_width=True)
+# Module 2: Choropleth Map
+elif module == "Choropleth Map":
+    st.subheader("📺 Global Metric Choropleth Map")
+    metric = st.selectbox("Select Metric", numeric_cols)
+    fig = px.choropleth(
+        df,
+        locations="country_code",
+        color=metric,
+        hover_name="country",
+        color_continuous_scale="Agsunset",
+        projection="natural earth",
+        template='plotly_dark',
+        title=f"Global Distribution of {metric}"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# Module 3: Compare Countries
+elif module == "Compare Countries":
+    st.subheader("📊 Compare Countries")
+    countries = st.multiselect("Select Countries", country_list, default=country_list[:5])
+    metric = st.selectbox("Select Attribute to Compare", numeric_cols)
+    subset = df[df['country'].isin(countries)]
+
+    fig = px.bar(
+        subset,
+        x="country",
+        y=metric,
+        color="country",
+        title=f"Comparison on {metric}",
+        text_auto='.2s',
+        template='plotly_dark',
+        color_discrete_sequence=px.colors.qualitative.Bold
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# Module 4: Top-N Ranking Tool
+elif module == "Top-N Ranking Tool":
+    st.subheader("🏆 Top-N Countries by Metric")
+    metric = st.selectbox("Select Metric", numeric_cols, key='ranking_metric')
+    n = st.slider("Select Top N", 5, 30, 10)
+    top_df = df.nlargest(n, metric)[['country', metric]]
+
+    st.markdown(f"#### Top {n} Countries by `{metric}`")
+    fig = px.bar(
+        top_df,
+        x=metric,
+        y="country",
+        orientation='h',
+        text_auto='.2s',
+        template='plotly_dark',
+        color_discrete_sequence=['goldenrod']
+    )
+    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(top_df.reset_index(drop=True), use_container_width=True)
+
+# Module 5: Correlation Explorer
+elif module == "Correlation Explorer":
+    st.markdown("## 🧠 Correlation Heatmap of Military Metrics (Interactive)")
+    selected_attrs = st.multiselect("Select Attributes", numeric_cols, default=numeric_cols[:8])
+
+    if len(selected_attrs) >= 2:
+        corr = df[selected_attrs].corr().round(2)
+        fig = px.imshow(
+            corr,
+            text_auto=True,
+            color_continuous_scale="RdBu_r",
+            aspect="auto",
+            labels=dict(color="Correlation"),
         )
-        df_sel.index = df_sel.index.astype(int)
-        df_sel = df_sel.loc[year_range[0]:year_range[1]]
-
-        st.subheader("Line Chart: Expenditure Over Time")
-        st.line_chart(df_sel)
-
-        st.subheader("Bar Chart: Single Year Comparison")
-        year_choice = st.selectbox(
-            "Pick a year to compare:",
-            options=list(df_sel.index)[::-1]
+        fig.update_layout(
+            title="Correlation Matrix",
+            title_font_size=22,
+            paper_bgcolor="#222",
+            plot_bgcolor="#111",
+            font_color="white",
+            margin=dict(l=40, r=40, t=60, b=40),
         )
-        st.bar_chart(df_sel.loc[year_choice])
-
-with tab2:
-    st.header("Top & Bottom 5 Spenders")
-    # Top 5
-    st.subheader("🔝 Top 5 Countries by Total Expenditure")
-    top_range = st.slider(
-        "Year span for Top 5 analysis:",
-        min_value=1960, max_value=2018, value=(1960, 2018),
-        key="top_span"
-    )
-    top_years = [str(y) for y in range(top_range[0], top_range[1] + 1)]
-    df_total = df[['Name'] + top_years].set_index('Name')
-    top5 = df_total.sum(axis=1).nlargest(5)
-    fig1, ax1 = plt.subplots(figsize=(8, 4))
-    ax1.bar(top5.index, top5.values, color='green')
-    ax1.set_title(f"Top 5 Spenders ({top_range[0]}–{top_range[1]})")
-    ax1.set_ylabel("Total Expenditure (USD)")
-    ax1.set_xticklabels(top5.index, rotation=30)
-    ax1.yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
-    st.pyplot(fig1)
-
-    st.subheader("📈 Trends for Top 5")
-    df_top5 = df[df['Name'].isin(top5.index)][['Name'] + years_all]\
-                 .set_index('Name').transpose()
-    df_top5.index = df_top5.index.astype(int)
-    st.line_chart(df_top5.loc[top_range[0]:top_range[1]])
-
-    # Bottom 5
-    st.markdown("---")
-    st.subheader("🔻 Bottom 5 Non-Zero Spenders")
-    bottom_range = st.slider(
-        "Year span for Bottom 5 analysis:",
-        min_value=1960, max_value=2018, value=(1970, 2018),
-        key="bottom_span"
-    )
-    bottom_years = [str(y) for y in range(bottom_range[0], bottom_range[1] + 1)]
-    df_bottom = df[['Name'] + bottom_years].set_index('Name')
-    bottom5 = df_bottom.sum(axis=1)
-    bottom5 = bottom5[bottom5 > 0].nsmallest(5)
-    fig2, ax2 = plt.subplots(figsize=(8, 4))
-    ax2.bar(bottom5.index, bottom5.values, color='red')
-    ax2.set_title(f"Bottom 5 Spenders ({bottom_range[0]}–{bottom_range[1]})")
-    ax2.set_ylabel("Total Expenditure (USD)")
-    ax2.set_xticklabels(bottom5.index, rotation=30)
-    ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
-    st.pyplot(fig2)
-
-    st.subheader("📈 Trends for Bottom 5")
-    df_bot5 = df[df['Name'].isin(bottom5.index)][['Name'] + years_all]\
-                  .set_index('Name').transpose()
-    df_bot5.index = df_bot5.index.astype(int)
-    st.line_chart(df_bot5.loc[bottom_range[0]:bottom_range[1]])
-
-with tab3:
-    st.header("Global Military Expenditure Map")
-    year_map = st.slider(
-        "Select a year for the map:",
-        min_value=1960, max_value=2018, value=2018
-    )
-    df_map = df[["Name", str(year_map)]].copy()
-    df_map.columns = ["Country", "Expenditure"]
-    df_map = df_map[df_map["Expenditure"] > 0]
-
-    fig_map = px.choropleth(
-        df_map,
-        locations="Country",
-        locationmode="country names",
-        color="Expenditure",
-        hover_name="Country",
-        color_continuous_scale="YlOrRd",
-        projection="orthographic",
-        title=f"Military Expenditure by Country in {year_map}"
-    )
-    fig_map.update_layout(
-        margin=dict(l=10, r=10, t=50, b=10),
-        geo=dict(
-            bgcolor='rgba(0,0,0,0)',
-            showland=True, landcolor="rgb(217,217,217)",
-            subunitcolor="rgb(255,255,255)",
-            lataxis_showgrid=True, lonaxis_showgrid=True
-        ),
-        coloraxis_colorbar=dict(title="Expenditure (USD)")
-    )
-    st.plotly_chart(fig_map, use_container_width=True)
+        fig.update_xaxes(side="bottom", tickangle=45, showgrid=False)
+        fig.update_yaxes(showgrid=False)
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("Please select at least 2 attributes to show correlation heatmap.")
