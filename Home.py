@@ -12,7 +12,7 @@ st.markdown(
     <style>
     /* Full-screen app container with centered native-size background */
     .stApp {
-        background: url('https://media.istockphoto.com/id/1287083951/photo/full-length-portrait-of-an-army-soldier-in-full-military-gear-helmet-glasses-and-mask.jpg?s=612x612&w=0&k=20&c=t7a2Bg6n90dHFZjtpLHxgzl3rVrrdEPL2i9hQZ9rluc=')
+        background: url('https://www.vecteezy.com/photo/27103278-silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities')
                     no-repeat right center fixed;
         background-size: contain;  /* show at native resolution, fully visible */
     }
