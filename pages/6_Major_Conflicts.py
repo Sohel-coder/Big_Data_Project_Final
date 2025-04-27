@@ -337,195 +337,188 @@ if war:
     # ── Tabs ──
     tab = st.radio("📂 Select Section:", ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], horizontal=True)
 
+    # --- Tab 1: Budget Trends (% of GDP for all parties + checkpoint) ---
     if tab == "📊 Budget Trends":
         st.subheader(f"📈 Defence Budget (% of GDP) Around {war}")
 
-        # years +/- 2 around conflict year
+        # years ±2 around conflict
         years = [str(y) for y in range(year-2, year+3)]
         fig = go.Figure()
+        all_gdp = []
 
+        # plot each country
         for country in info['countries']:
-            df_c = budget_df[budget_df["Country Name"]==country]
-            if df_c.empty:
-                continue
-            gdp_df = df_c[years].T.reset_index()
-            gdp_df.columns = ["Year","% of GDP"]
-            gdp_df["Year"] = gdp_df["Year"].astype(int)
-
+            df_c = budget_df[budget_df["Country Name"] == country]
+            if df_c.empty: continue
+            tmp = df_c[years].T.reset_index()
+            tmp.columns = ["Year","% of GDP"]
+            tmp["Year"] = tmp["Year"].astype(int)
+            all_gdp += tmp["% of GDP"].dropna().tolist()
             fig.add_trace(go.Scatter(
-                x=gdp_df["Year"],
-                y=gdp_df["% of GDP"],
+                x=tmp["Year"], y=tmp["% of GDP"],
                 mode="lines+markers",
                 name=country
             ))
 
-        # integer ticks & labels
+        if all_gdp:
+            max_gdp = max(all_gdp)
+            # vertical line at conflict year
+            fig.add_vline(
+                x=year,
+                line=dict(color="black", dash="dash")
+            )
+            # annotation / pin for conflict
+            fig.add_annotation(
+                x=year,
+                y=max_gdp,
+                text=f"{war} ({year})",
+                showarrow=True,
+                arrowhead=2,
+                ay=-40
+            )
+
+        # force integer ticks on x, restore y-axis label
         fig.update_xaxes(
             tickmode="linear",
             dtick=1,
             tickformat="d",
             title_text="Year"
         )
-        fig.update_yaxes(
-            title_text="% of GDP"
-        )
+        fig.update_yaxes(title_text="% of GDP")
+
         fig.update_layout(
             hovermode="x unified",
             template="plotly_white",
-            margin=dict(l=20,r=20,t=40,b=20)
+            margin=dict(l=20, r=20, t=40, b=20)
         )
 
         st.plotly_chart(fig, use_container_width=True)
-        
-    elif tab=="🪖 Military Strength":
+
+    # --- Tab 2: Military Strength ---
+    elif tab == "🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
         sel_year = str(year)
         if sel_year in strength_db:
             strength = strength_db[sel_year]
-            categories = list(strength[list(strength.keys())[0]].keys())
-            fig_strength = go.Figure()
-            for country in strength:
-                fig_strength.add_trace(go.Bar(
-                    x=[strength[country][cat] for cat in categories],
-                    y=categories,
+            cats = list(strength[next(iter(strength))].keys())
+            fig2 = go.Figure()
+            for country, vals in strength.items():
+                fig2.add_trace(go.Bar(
+                    x=[vals[c] for c in cats],
+                    y=cats,
                     name=country,
-                    orientation='h'
+                    orientation="h"
                 ))
-            fig_strength.update_layout(
+            fig2.update_layout(
                 barmode='group',
                 xaxis_title='Units',
                 yaxis_title='Category',
                 template='plotly_white'
             )
-            st.plotly_chart(fig_strength,use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True)
         else:
-            st.info("🪖 Military strength data not available for this conflict.")
+            st.info("🪖 Data not available for this conflict.")
 
+    # --- Tab 3: Conflict Map Animation ---
     else:
         st.subheader("🗺️ Conflict Map & 5-Step Troop Movements")
 
-        # pick exactly 5 events from origin → end
-        evs=info['events']
-        if len(evs)>=5:
-            idxs = np.linspace(0,len(evs)-1,5,dtype=int)
+        evs = info['events']
+        if len(evs) >= 5:
+            idxs = np.linspace(0, len(evs)-1, 5, dtype=int)
             sel_evs = [evs[i] for i in idxs]
         else:
             sel_evs = evs + [{"date":"","event":""}]*(5-len(evs))
 
-        # interpolate 5 positions
-        f=info['troop_movements'][0]['from']
-        t=info['troop_movements'][0]['to']
-        lats=np.linspace(f['lat'],t['lat'],5)
-        lons=np.linspace(f['lon'],t['lon'],5)
-        positions=[{"lat":lat,"lon":lon} for lat,lon in zip(lats,lons)]
+        f = info['troop_movements'][0]['from']
+        t = info['troop_movements'][0]['to']
+        lats = np.linspace(f['lat'], t['lat'], 5)
+        lons = np.linspace(f['lon'], t['lon'], 5)
+        positions = [{"lat":la, "lon":lo} for la,lo in zip(lats,lons)]
 
-        map_ph=st.empty()
-        txt_ph=st.empty()
-        play=st.checkbox("▶️ Play Animation")
+        map_ph = st.empty()
+        txt_ph = st.empty()
+        play  = st.checkbox("▶️ Play Animation")
+
         def render(i):
-            origin = positions[0]
-            terminus = positions[-1]
-
-            # reverse geocode start/end
-            start_name = get_location_name(origin["lat"], origin["lon"])
-            end_name   = get_location_name(terminus["lat"], terminus["lon"])
-
+            o = positions[0]
+            e = positions[-1]
             layers = []
 
-            # 🟢 START marker
-            df_start = pd.DataFrame([{
-                "lat": origin["lat"],
-                "lon": origin["lon"],
-                "label": f"🟢 {start_name} — {sel_evs[0]['date']}"
+            # START
+            df_s = pd.DataFrame([{
+                "lat": o["lat"], "lon": o["lon"],
+                "label": f"🟢 Start — {get_location_name(o['lat'], o['lon'])}"
             }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_start,
-                get_position='[lon, lat]',
-                get_color='[0, 255, 0, 200]',
-                get_radius=30000, pickable=True
+            layers.append(pdk.Layer("ScatterplotLayer", data=df_s,
+                get_position='[lon, lat]', get_color=[0,255,0], get_radius=30000, pickable=True
             ))
 
-            # 🔴 END marker
-            df_end = pd.DataFrame([{
-                "lat": terminus["lat"],
-                "lon": terminus["lon"],
-                "label": f"🔴 {end_name} — {sel_evs[-1]['date']}"
+            # END
+            df_e = pd.DataFrame([{
+                "lat": e["lat"], "lon": e["lon"],
+                "label": f"🔴 End — {get_location_name(e['lat'], e['lon'])}"
             }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_end,
-                get_position='[lon, lat]',
-                get_color='[255, 0, 0, 200]',
-                get_radius=30000, pickable=True
+            layers.append(pdk.Layer("ScatterplotLayer", data=df_e,
+                get_position='[lon, lat]', get_color=[255,0,0], get_radius=30000, pickable=True
             ))
 
-            # fixed sector markers (unchanged)
-            if war in additional_movements:
-                df_sec = pd.DataFrame(additional_movements[war])
-                layers.append(pdk.Layer(
-                    "ScatterplotLayer", data=df_sec,
-                    get_position='[lon, lat]',
-                    get_color='[0, 200, 200, 150]',
-                    get_radius=15000, pickable=True
-                ))
-
-            # path up to this step
-            if i > 0:
-                df_line = pd.DataFrame([{
-                    "start_lon": positions[i-1]['lon'],
-                    "start_lat": positions[i-1]['lat'],
-                    "end_lon":   positions[i]['lon'],
-                    "end_lat":   positions[i]['lat']
+            # intermediate route segment
+            if i>0:
+                segment = pd.DataFrame([{
+                    "start_lon": positions[i-1]['lon'], "start_lat": positions[i-1]['lat'],
+                    "end_lon": positions[i]['lon'],     "end_lat": positions[i]['lat']
                 }])
-                layers.append(pdk.Layer(
-                    "LineLayer", data=df_line,
+                layers.append(pdk.Layer("LineLayer", data=segment,
                     get_source_position="[start_lon, start_lat]",
                     get_target_position="[end_lon, end_lat]",
-                    get_width=4
+                    get_width=4, get_color=[0,0,0]
                 ))
 
-            # 🔵 moving marker
-            df_move = pd.DataFrame([{
-                "lat": positions[i]['lat'],
-                "lon": positions[i]['lon'],
+            # moving marker
+            cur = positions[i]
+            df_m = pd.DataFrame([{
+                "lat": cur['lat'], "lon": cur['lon'],
                 "label": f"🔵 {sel_evs[i]['date']}"
             }])
-            layers.append(pdk.Layer(
-                "ScatterplotLayer", data=df_move,
-                get_position='[lon, lat]',
-                get_color='[0, 0, 255, 180]',
-                get_radius=20000, pickable=True
+            layers.append(pdk.Layer("ScatterplotLayer", data=df_m,
+                get_position='[lon, lat]', get_color=[0,0,255], get_radius=20000, pickable=True
             ))
 
-            # render deck
+            # fixed checkpoints
+            if war in additional_movements:
+                layers.append(pdk.Layer("ScatterplotLayer",
+                    data=pd.DataFrame(additional_movements[war]),
+                    get_position='[lon, lat]',
+                    get_color=[0,200,200], get_radius=15000, pickable=True
+                ))
+
+            center = np.mean([[p['lat'],p['lon']] for p in positions], axis=0)
             deck = pdk.Deck(
                 map_style="mapbox://styles/mapbox/satellite-streets-v11",
                 initial_view_state=pdk.ViewState(
-                    latitude=(origin["lat"] + terminus["lat"])/2,
-                    longitude=(origin["lon"] + terminus["lon"])/2,
-                    zoom=5, pitch=45
+                    latitude=center[0], longitude=center[1], zoom=5, pitch=45
                 ),
                 layers=layers,
-                tooltip={"text": "{label}"}
+                tooltip={"text":"{label}"}
             )
             map_ph.pydeck_chart(deck)
+            txt_ph.markdown(f"**{sel_evs[i]['date']}** — {sel_evs[i]['event']}")
 
-        # ─── Legend ───
         st.markdown("""
         <div style="background:#fff;padding:8px;border-radius:4px;display:inline-block;">
-        <span style="color:green;">🟢 Start Point</span> – origin of the war<br>
-        <span style="color:red;">🔴 End Point</span> – where the war ended
-        </div>
-        """, unsafe_allow_html=True)
+          <span style="color:green;">🟢 Start</span>  
+          <span style="color:red;">🔴 End</span>  
+          <span style="color:blue;">🔵 Current</span>  
+          <span style="color:black;">— Route</span>
+        </div>""", unsafe_allow_html=True)
 
         if play:
-            for i, ev in enumerate(sel_evs):
-                txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
+            for i in range(5):
                 render(i)
                 time.sleep(1)
         else:
-            step=st.slider("Step",0,4,0)
-            ev=sel_evs[step]
-            txt_ph.markdown(f"**{ev['date']}** — {ev['event']}")
+            step = st.slider("Step", 0, 4, 0)
             render(step)
 
         st.markdown("### 🏁 Outcome")
