@@ -455,9 +455,7 @@ if compare_countries:
             y=1.02,
             xanchor="right",
             x=1
-        ),
-        plot_bgcolor='#F0F8FF',
-        paper_bgcolor='#F0F8FF'
+        )
     )
     st.plotly_chart(fig_exp, use_container_width=True)
     
@@ -493,9 +491,7 @@ if compare_countries:
             y=1.02,
             xanchor="right",
             x=1
-        ),
-        plot_bgcolor='#F0F8FF',
-        paper_bgcolor='#F0F8FF'
+        )
     )
     st.plotly_chart(fig_imp, use_container_width=True)
 else:
