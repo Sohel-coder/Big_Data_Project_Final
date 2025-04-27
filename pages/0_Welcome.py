@@ -31,7 +31,6 @@ try:
 except:
     formatted_budget = "Data unavailable"
 
-# ─── INJECT CSS ────────────────────────────────────────────────────────────────
 st.markdown(
     """
     <style>
@@ -41,7 +40,7 @@ st.markdown(
                   no-repeat center center fixed;
       background-size: cover;
     }
-    /* Translucent sidebar */
+    /* Translucent sidebar (if you ever re-enable it) */
     [data-testid="stSidebar"] {
       background-color: rgba(0, 0, 0, 0.6);
     }
@@ -54,7 +53,6 @@ st.markdown(
     /* Theme colors */
     :root {
       --primary-color: #1E3A8A;
-      --secondary-color: #991B1B;
       --text-color: #1E293B;
       --accent-color: #4F46E5;
     }
@@ -91,7 +89,7 @@ st.markdown(
       margin-bottom: 2rem;
     }
     .stat-card {
-      background: white;
+      background: rgba(255,255,255,0.3);    /* make this translucent */
       padding: 1.5rem;
       border-radius: 10px;
       text-align: center;
@@ -115,7 +113,7 @@ st.markdown(
       gap: 1.5rem;
     }
     .feature-card {
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.3);    /* make this translucent */
       padding: 1.5rem;
       border-radius: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.8);
@@ -140,7 +138,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # ─── WELCOME LAYOUT ────────────────────────────────────────────────────────────
 st.markdown('<div class="welcome-container">', unsafe_allow_html=True)
 
