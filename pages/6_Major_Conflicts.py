@@ -337,19 +337,18 @@ if war:
     # ── Tabs ──
     tab = st.radio("📂 Select Section:", ["📊 Budget Trends","🪖 Military Strength","🗺️ Conflict Map"], horizontal=True)
 
-    if tab=="📊 Budget Trends":
+    if tab == "📊 Budget Trends":
         st.subheader(f"📈 Defence Budget (% of GDP) Around {war}")
 
-        # we’ll look two years either side of the conflict year
+        # years +/- 2 around conflict year
         years = [str(y) for y in range(year-2, year+3)]
         fig = go.Figure()
 
-        # add one %-of-GDP line per country in the conflict
         for country in info['countries']:
-            df_country = budget_df[budget_df["Country Name"]==country]
-            if df_country.empty:
+            df_c = budget_df[budget_df["Country Name"]==country]
+            if df_c.empty:
                 continue
-            gdp_df = df_country[years].T.reset_index()
+            gdp_df = df_c[years].T.reset_index()
             gdp_df.columns = ["Year","% of GDP"]
             gdp_df["Year"] = gdp_df["Year"].astype(int)
 
@@ -360,7 +359,7 @@ if war:
                 name=country
             ))
 
-        # force integer‐year ticks, tidy up
+        # integer ticks & labels
         fig.update_xaxes(
             tickmode="linear",
             dtick=1,
@@ -376,8 +375,8 @@ if war:
             margin=dict(l=20,r=20,t=40,b=20)
         )
 
-    st.plotly_chart(fig, use_container_width=True)
-
+        st.plotly_chart(fig, use_container_width=True)
+        
     elif tab=="🪖 Military Strength":
         st.subheader("🪖 Military Strength Comparison")
         sel_year = str(year)
