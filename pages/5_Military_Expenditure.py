@@ -23,27 +23,25 @@ if df.empty:
     st.error("❌ No entries with Type='Country'.")
     st.stop()
 
-# --- App title ---
+# --- App config and title ---
 st.set_page_config(page_title="Military Expenditure Dashboard", layout="wide")
 st.title("🌍 Military Expenditure Visualization (1960–2018)")
 
-years_all = [str(year) for year in range(1960, 2019)]
-
-# --- Sidebar filters ---
+years_all = [str(y) for y in range(1960, 2019)]
 all_countries = sorted(df['Name'].unique())
 default_countries = ['United States', 'China', 'Russian Federation']
 
-st.sidebar.header("Filters")
-countries = st.sidebar.multiselect(
+# --- Filters on main page ---
+st.subheader("Filters")
+countries = st.multiselect(
     "Select countries:",
     options=all_countries,
     default=[c for c in default_countries if c in all_countries]
 )
-year_range = st.sidebar.slider(
-    "Year range:",
-    min_value=1960,
-    max_value=2018,
-    value=(1990, 2018)
+year_range = st.slider(
+    "Select year range:",
+    1960, 2018,
+    (1990, 2018)
 )
 
 # --- Selected Countries Time Series ---
@@ -79,7 +77,7 @@ if countries:
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📊 Single-Year Comparison")
-    year = st.selectbox("Select year:", df_sel.index[::-1])
+    year = st.selectbox("Select a year:", df_sel.index[::-1])
     values = df_sel.loc[year] / 1e9
     fig2 = go.Figure(go.Bar(
         x=values.index,
@@ -95,24 +93,19 @@ if countries:
     )
     st.plotly_chart(fig2, use_container_width=True)
 
-# --- Top/Bottom 5 Analysis ---
+# --- Top/Bottom 5 Analysis on main page ---
 st.subheader("💰 Top/Bottom 5 Spenders")
-
 range_tb = st.slider("Select range for Top/Bottom analysis:", 1960, 2018, (1960, 2018))
 cols_tb = [str(y) for y in range(range_tb[0], range_tb[1] + 1)]
-
-# sum per country
 sum_df = df[['Name'] + cols_tb].set_index('Name').sum(axis=1)
 
-# Top 5
+# Top 5 and Bottom 5
 top5 = sum_df.nlargest(5)
-# Bottom 5 non-zero
 bot5 = sum_df[sum_df > 0].nsmallest(5)
 
-# Plot bar charts
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown("Top 5")
+    st.markdown("**Top 5**")
     fig_top = go.Figure(go.Bar(
         x=top5.index,
         y=top5.values / 1e9,
@@ -123,7 +116,7 @@ with col1:
     fig_top.update_layout(template='plotly_dark', yaxis_title='Total (Billion USD)')
     st.plotly_chart(fig_top, use_container_width=True)
 with col2:
-    st.markdown("Bottom 5")
+    st.markdown("**Bottom 5**")
     fig_bot = go.Figure(go.Bar(
         x=bot5.index,
         y=bot5.values / 1e9,
@@ -134,9 +127,9 @@ with col2:
     fig_bot.update_layout(template='plotly_dark', yaxis_title='Total (Billion USD)')
     st.plotly_chart(fig_bot, use_container_width=True)
 
-# --- Global Choropleth ---
+# --- Global Choropleth on main page ---
 st.subheader("🗺 Global Map View")
-year_map = st.slider("Map year:", 1960, 2018, 2018)
+year_map = st.slider("Select map year:", 1960, 2018, 2018)
 map_df = df[['Name', str(year_map)]].rename(columns={str(year_map): 'Value'})
 map_df = map_df[map_df['Value'] > 0]
 fig_map = px.choropleth(
