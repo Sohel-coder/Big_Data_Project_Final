@@ -35,7 +35,7 @@ st.markdown(
 # Your rest of Home.py content…
 st.markdown("<h1>🎖️ Art of War</h1>", unsafe_allow_html=True)
 st.markdown("""
-### 🎖️ Welcome to the Military Data Analysis Platform
+###  Welcome to the Military Data Analysis Platform
 
 Embark on a journey through the unseen dynamics of global defense.
 
