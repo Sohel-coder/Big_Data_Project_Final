@@ -12,7 +12,7 @@ st.markdown(
     <style>
     /* Full-screen app container with centered native-size background */
     .stApp {
-        background: url('https://www.vecteezy.com/photo/27103278-silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities')
+        background: url('https://static.vecteezy.com/system/resources/previews/027/103/278/non_2x/silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities-free-photo.jpg')
                     no-repeat right center fixed;
         background-size: contain;  /* show at native resolution, fully visible */
     }
