@@ -1,15 +1,14 @@
 import streamlit as st
+#  ←– no other st.* calls (including decorators) before this!
+st.set_page_config(page_title="Art of War – Welcome", layout="wide")
+
 import pandas as pd
 
-# ——— Data load ———
 @st.cache_data
 def load_strength():
-    return pd.read_csv("data/2024_military_strength_by_country.csv")
+    return pd.read_csv("2024_military_strength_by_country.csv")
 
 military_strength = load_strength()
-
-# ——— Page config ———
-st.set_page_config(page_title="Art of War – Welcome", layout="wide")
 
 # ——— Custom CSS ———
 st.markdown("""
