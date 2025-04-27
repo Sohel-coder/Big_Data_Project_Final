@@ -13,8 +13,9 @@ st.markdown(
     /* Full-screen app container with centered native-size background */
     .stApp {
         background: url('https://static.vecteezy.com/system/resources/previews/027/103/278/non_2x/silhouette-soldiers-descend-from-helicopter-warning-of-danger-against-a-sunset-background-with-space-for-text-promoting-peace-and-cessation-of-hostilities-free-photo.jpg')
-                    no-repeat right center fixed;
+                    no-repeat center center fixed;
         background-size: contain;  /* show at native resolution, fully visible */
+        background
     }
 
     /* Make sidebar slightly translucent so the background peeks through */
