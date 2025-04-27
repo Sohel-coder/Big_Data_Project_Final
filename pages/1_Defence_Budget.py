@@ -184,7 +184,7 @@ with tab3:
                 "label": y_str,
                 "parent": decade_label,
                 "Spending": year_values[y_str],
-                
+                "ColorMetric": year_values[y_str]
             })
 
     df_sunburst = pd.DataFrame(sunburst_data)
