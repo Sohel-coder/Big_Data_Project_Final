@@ -520,8 +520,10 @@ if war:
         else:
             step = st.slider("Step", 0, 4, 0)
             render(step)
-
+        
         st.markdown("### 🏁 Outcome")
+        for line in info['outcome'].split(';'):
+            st.markdown(f"- {line.strip()}")
         st.write(info['outcome'])
 
 st.markdown("---")
