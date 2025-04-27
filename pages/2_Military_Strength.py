@@ -34,7 +34,7 @@ st.markdown(
 # Load dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv("military_data.csv")
+    df = pd.read_csv("data/military_data.csv")
     return df
 
 df = load_data()
