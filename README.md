@@ -14,7 +14,6 @@ This Streamlit app visualizes global military data, including:
 ```
 Home.py           # Main landing page
 pages/            # Each file corresponds to a section of the app
-  1_World_Map.py
   2_Defense_Budget.py
   3_Military_Strength.py
   4_Trade_Data.py
@@ -22,7 +21,6 @@ pages/            # Each file corresponds to a section of the app
   6_Military_Expenditure.py
   7_Major_Conflicts.py
   8_Predictions_2047.py
-assets/           # Place project images or documents here
 requirements.txt   # Python dependencies
 README.md          # Project documentation
 ```
@@ -39,6 +37,4 @@ README.md          # Project documentation
    ```
 4. Use the sidebar to navigate between pages.
 
-## Assets
-Add any images or related documents to the `assets` folder and reference them in your pages.
 
