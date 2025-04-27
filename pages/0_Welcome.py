@@ -88,13 +88,18 @@ st.markdown(
       gap: 1rem;
       margin-bottom: 2rem;
     }
+    /* Stat cards with a subtle texture behind them */
     .stat-card {
-      background: rgba(0,0,0,0);    /* make this translucent */
+      background:
+        linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)),
+        url('https://your-statcard-texture.png') no-repeat center center;
+      background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
       text-align: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
+
     .stat-value {
       font-size: 2rem;
       font-weight: 700;
@@ -112,14 +117,19 @@ st.markdown(
       grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
       gap: 1.5rem;
     }
+    /* Feature cards with custom imagery */
     .feature-card {
-      background: rgba(0,0,0,0);    /* make this translucent */
+      background:
+        linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+        url('https://your-feature-background.jpg') no-repeat center center;
+      background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.8);
       border-left: 4px solid var(--accent-color);
       transition: transform 0.3s ease;
     }
+
     .feature-card:hover {
       transform: translateY(-5px);
     }
