@@ -365,9 +365,9 @@ if st.session_state['show_trade_popup'] and st.session_state['trade_popup_conten
         <div class='trade-popup-container show'>
             <div class='popup-title'>Trade Details with {trade_popup_content['country']} (FY {st.session_state['selected_year']})</div>
             <div class='popup-description'>
-                Imports: ${trade_popup_content['imports']}B<br>
-                Exports: ${trade_popup_content['exports']}B<br>
-                Trade Balance: ${trade_popup_content['trade_balance']}B
+                Imports: ${trade_popup_content['imports']:.3f}B<br>
+                Exports: ${trade_popup_content['exports']:.3f}B<br>
+                Trade Balance: ${trade_popup_content['trade_balance']:.3f}B
             </div>
         </div>
         """,
