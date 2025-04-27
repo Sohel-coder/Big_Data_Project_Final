@@ -147,7 +147,7 @@ conflicts = {
     'Kargil War (1999)': {
         'year': 1999,
         'countries': ['India','Pakistan'],
-        'region': 'Asia (Kashmir)',
+        'region': 'Asia ',
         'description': 'Infiltration along the LoC in Kargil.',
         'impact': 'Heightened tensions; border security strengthened.',
         'outcome': 'India regained posts; conflict ended by July 1999.',
