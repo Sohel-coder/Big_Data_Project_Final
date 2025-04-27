@@ -4,201 +4,88 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import plotly.express as px
 
-# ── Streamlit page setup ──
-st.set_page_config(
-    page_title="🔮 Defence Power Index Projection (2050)",
-    layout="wide"
+st.set_page_config(page_title="Predictions", layout="wide")
+
+st.title("Predicting the future of Defence")
+st.markdown(
+    """
+    This section provides insights into the projected military power index for various countries in 2047, based on historical trends.
+    """
 )
-st.title("🔮 Predicting Global & Indian Defence Power Index (2050)")
-st.markdown("""
-We train a linear regression model on **2024** military-strength data combined with
-**2005–2018** averages of:
-- **Defence budget** (% of GDP)
-- **Annual military expenditure** (USD)
-- **Exports & imports** (USD)
-- **Defence-industry scale** (annual revenue & employees)
 
-We then predict each country’s **Power Index** in **2050**, assuming these inputs
-remain at their historical averages.
-""")
-
-# ── Data loading & aggregation ──
+# --- Load Data ---
 @st.cache_data
-def load_and_aggregate():
-    # 1) Defence budget % GDP 2005–2018
-    bud = pd.read_csv("data/Cleaned_Defence_Budget.csv")
-    # identify year‐columns by checking if the column name is all digits
-    year_cols = [c for c in bud.columns if c.isdigit()]
-    
-    bud_long = ( bud.melt(
-        id_vars=["Country Name"],
-        var_name="year",
-        value_name="def_budget_pct_gdp"
-    )
-    .rename(columns={"Country Name": "country"})
-    .assign(year=lambda df: df["year"].astype(int))
-    )
+def load_current_power():
+    """Load the latest military power index for each country."""
+    df = pd.read_csv("data/2024_military_strength_by_country.csv")
+    # Expect columns: 'country', 'pwr_index'
+    return df[['country', 'pwr_index']]
 
-    bud_long["year"] = bud_long["year"].astype(int)
-    bud_avg = (
-        bud_long
-        .query("2005 <= year <= 2018")
-        .groupby("country", as_index=False)["def_budget_pct_gdp"]
-        .mean()
-    )
+@st.cache_data
+def load_power_trends():
+    """Load historical power index trends for forecasting."""
+    # Expect columns: 'country', 'year', 'pwr_index'
+    return pd.read_csv("pwr_index_trends.csv")
 
-    # 2) Military expenditure USD 2005–2018
-    exp = pd.read_excel("data/Military_Expenditure_final_rounded.xlsx")
-    exp_long = (
-        exp
-        .melt(id_vars=["Name"], var_name="year", value_name="exp_usd")
-        .rename(columns={"Name": "country"})
-    )
-    exp_long["year"] = exp_long["year"].astype(int)
-    exp_avg = (
-        exp_long
-        .query("2005 <= year <= 2018")
-        .groupby("country", as_index=False)["exp_usd"]
-        .mean()
-    )
+# Load datasets
+current_df = load_current_power()
+trends_df = load_power_trends()
 
-    # 3) Trade (exports & imports) 2005–2018
-    trade = pd.read_csv("data/exports_imports_cleaned.csv")
-    trade_avg = (
-        trade
-        .query("2005 <= year <= 2018")
-        .groupby("country", as_index=False)[["exports_usd", "imports_usd"]]
-        .mean()
-    )
+# Forecast to 2047 using linear regression per country
+def forecast_2047(trend_df):
+    X = trend_df[['year']].values.reshape(-1, 1)
+    y = trend_df['pwr_index'].values
+    model = LinearRegression()
+    model.fit(X, y)
+    pred = model.predict(np.array([[2047]]))[0]
+    return pred
 
-    # 4) Defence-industry companies 2005–2018
-    comp = pd.read_csv("data/updated_defense_companies_2005_2020.csv")
-    comp_avg = (
-        comp
-        .query("2005 <= year <= 2018")
-        .groupby("country", as_index=False)[["revenue_usd", "employees"]]
-        .mean()
-    )
+predictions = []
+for country, grp in trends_df.groupby('country'):
+    try:
+        p2047 = forecast_2047(grp)
+        predictions.append({'country': country, 'pwr_index_2047': p2047})
+    except Exception:
+        continue
 
-    # 5) 2024 military strength & current Power Index
-    strength = pd.read_csv("data/2024_military_strength_by_country.csv")
-    strength = strength.rename(columns={
-        "active_service_military_manpower": "active_personnel",
-        "total_military_aircraft_strength": "total_aircraft",
-        "total_combat_tank_strength": "total_tanks",
-        "navy_strength":            "navy_strength",
-        "pwr_index":                "pwr_index"
-    })
+pred_df = pd.DataFrame(predictions)
+# Merge with current to compare
+compare_df = current_df.merge(pred_df, on='country', how='inner')
 
-    # Merge all data on 'country'
-    df = (
-        strength[[
-            "country","active_personnel","total_aircraft",
-            "total_tanks","navy_strength","pwr_index"
-        ]]
-        .merge(bud_avg,    on="country", how="left")
-        .merge(exp_avg,    on="country", how="left")
-        .merge(trade_avg,  on="country", how="left")
-        .merge(comp_avg,   on="country", how="left")
-    )
+# Sort by projected power (lower is stronger)
+compare_df = compare_df.sort_values('pwr_index_2047')
 
-    # Drop rows with any missing values
-    return df.dropna()
+# Display
+st.header("Projected Military Power Index for 2047")
 
-df = load_and_aggregate()
-st.markdown(f"Dataset contains **{len(df)}** countries with complete data.")
-
-# ── Model training ──
-features = [
-    "active_personnel",
-    "total_aircraft",
-    "total_tanks",
-    "navy_strength",
-    "def_budget_pct_gdp",
-    "exp_usd",
-    "exports_usd",
-    "imports_usd",
-    "revenue_usd",
-    "employees"
-]
-X = df[features]
-y = df["pwr_index"]
-
-model = LinearRegression()
-model.fit(X, y)
-
-# ── Predict 2050 ──
-df["predicted_pwr_index_2050"] = model.predict(X)
-
-# ── Show coefficients ──
-st.subheader("🔍 Feature Influence on Power Index")
-coef_df = (
-    pd.DataFrame({
-        "feature": features,
-        "coefficient": model.coef_
-    })
-    .set_index("feature")
-    .sort_values("coefficient", ascending=False)
+st.markdown(
+    "Forecasted 'pwr_index' values for each country in 2047, based on historical trends (linear regression). Lower index = stronger power."
 )
-st.bar_chart(coef_df)
 
-# ── Top 10 strongest in 2050 ──
-st.header("🏆 Top 10 Countries by Projected Power Index (2050)")
-top10 = df.nsmallest(10, "predicted_pwr_index_2050")
-fig_top = px.bar(
+# Bar chart of top 10 strongest projected powers
+top10 = compare_df.head(10)
+fig = px.bar(
     top10,
-    x="country",
-    y="predicted_pwr_index_2050",
-    text=top10["predicted_pwr_index_2050"].round(2),
-    labels={"predicted_pwr_index_2050":"Projected Power Index (2050)"},
-    title="Lower Index ⇒ Stronger Power",
-    template="plotly_white"
+    x='country',
+    y='pwr_index_2047',
+    title='Top 10 Countries by Projected Power Index (2047)',
+    labels={'pwr_index_2047': 'Projected Power Index'},
+    text=top10['pwr_index_2047'].round(2)
 )
-fig_top.update_layout(yaxis={"autorange":"reversed"})
-fig_top.update_traces(textposition="outside")
-st.plotly_chart(fig_top, use_container_width=True)
+fig.update_traces(textposition='outside')
+fig.update_layout(yaxis=dict(autorange='reversed'))
+st.plotly_chart(fig, use_container_width=True)
 
-# ── Distribution of projections ──
-st.subheader("📊 Distribution of Projected Power Index (2050)")
-fig_dist = px.histogram(
-    df,
-    x="predicted_pwr_index_2050",
-    nbins=20,
-    title="Global Spread of Defence Power Indices by 2050",
-    labels={"predicted_pwr_index_2050":"Projected Power Index (2050)"},
-    template="plotly_white"
+# Full comparison table
+st.subheader("Current vs. Projected Power Index")
+compare_df['pwr_index'] = compare_df['pwr_index'].round(2)
+compare_df['pwr_index_2047'] = compare_df['pwr_index_2047'].round(2)
+st.dataframe(compare_df.rename(columns={
+    'pwr_index': 'Current (2024)',
+    'pwr_index_2047': 'Projected (2047)'
+}), use_container_width=True)
+
+# Insight
+st.markdown(
+    "**Insight:** Countries at the top of the projected list are expected to strengthen further relative to others by 2047, assuming linear trends."
 )
-st.plotly_chart(fig_dist, use_container_width=True)
-
-# ── India callout ──
-st.subheader("🇮🇳 Spotlight: India")
-india = df[df["country"] == "India"]
-if not india.empty:
-    idx = india.index[0]
-    india_score = india.at[idx, "predicted_pwr_index_2050"]
-    india_rank  = int(df["predicted_pwr_index_2050"].rank(method="min").iloc[idx])
-    st.markdown(f"""
-    - **Projected Power Index (2050):** {india_score:.2f}  
-    - **Global Rank (2050):** {india_rank} / {len(df)}
-    """)
-else:
-    st.info("No projection available for India.")
-
-# ── Comparison table ──
-st.subheader("📋 Current (2024) vs Projected (2050) Power Index")
-compare = df[["country", "pwr_index", "predicted_pwr_index_2050"]].rename(columns={
-    "pwr_index": "Current (2024)",
-    "predicted_pwr_index_2050": "Projected (2050)"
-})
-st.dataframe(compare.round(2), use_container_width=True)
-
-# ── Explanation ──
-st.markdown("""
-**Model Explanation**  
-- We train on **2024** Power Index using a country’s:
-  - **Military strength** (personnel, aircraft, tanks, navy)  
-  - **Historic averages (2005–2018)** of budget, expenditure, trade, and industry scale  
-- We then apply the learned linear relationships to project **2050** indices,  
-  assuming these inputs stay constant at their historical averages.  
-- A **lower** Power Index signifies **greater** defence strength.
-""")
