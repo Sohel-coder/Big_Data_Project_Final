@@ -50,15 +50,11 @@ conflicts = {
             {"date":"Nov 5, 1962","event":"Indian reinforcements airlifted."},
             {"date":"Nov 20, 1962","event":"China declares ceasefire."}
         ],
+        # We'll only use the eastern axis for the animation:
         'troop_movements': [
-            {"from":{"lat":33.61,"lon":78.26}, "to":{"lat":33.56,"lon":78.33}},  # Sirijap → Pangong
-            {"from":{"lat":33.56,"lon":78.33}, "to":{"lat":33.03,"lon":78.42}},  # Pangong → Chushul
-            {"from":{"lat":35.30,"lon":77.05}, "to":{"lat":35.20,"lon":80.00}},  # Karakoram → Aksai Chin
-            {"from":{"lat":35.20,"lon":80.00}, "to":{"lat":34.53,"lon":78.92}},  # Aksai Chin → Galwan
-            {"from":{"lat":28.12,"lon":97.83}, "to":{"lat":27.59,"lon":91.87}},  # Walong → Tawang
             {"from":{"lat":27.59,"lon":91.87}, "to":{"lat":27.40,"lon":92.02}},  # Tawang → Dirang Dzong
-            {"from":{"lat":27.40,"lon":92.02}, "to":{"lat":27.32,"lon":92.46}},  # Dirang Dzong → Bomdi La
-            {"from":{"lat":27.32,"lon":92.46}, "to":{"lat":27.27,"lon":92.23}},  # Bomdi La → Rupa
+            {"from":{"lat":27.40,"lon":92.02}, "to":{"lat":27.32,"lon":92.46}},  # Dirang → Bomdi La
+            {"from":{"lat":27.32,"lon":92.46}, "to":{"lat":27.27,"lon":92.23}}   # Bomdi La → Rupa
         ]
     },
     'Indo-Pakistan War (1965)': {
@@ -446,77 +442,63 @@ if war:
 
     else:
         # ── Conflict Map Animation ──────────────────────────────────────────
-
-        # For Indo-China War, use Eastern-axis only: Tawang → Dirang → Bomdi La → Rupa
-        if war=="Indo-China War (1962)":
-            full_route = [
-                {"lat":27.59,"lon":91.87},  # 🟢 Tawang
-                {"lat":27.40,"lon":92.02},  # Dirang Dzong
-                {"lat":27.32,"lon":92.46},  # Bomdi La
-                {"lat":27.27,"lon":92.23},  # 🟥 Rupa
-            ]
-        else:
-            segs = info['troop_movements']
-            full_route = [segs[0]['from']] + [m['to'] for m in segs]
-
+        segs = info['troop_movements']
+        full_route = [segs[0]['from']] + [m['to'] for m in segs]
         N_STEPS = len(full_route)
-        map_ph   = st.empty()
-        caption  = st.empty()
-        play     = st.checkbox("▶️ Play Animation")
+
+        map_ph  = st.empty()
+        caption = st.empty()
+        play    = st.checkbox("▶️ Play Animation")
 
         def render(step):
-            df_full = pd.DataFrame(full_route)
             df_trav = pd.DataFrame(full_route[:step+1])
             pos     = full_route[step]
 
-            # Layers: full route (black), travelled (red), start (green), end (red), current (blue)
             layers = [
-                # full route in black
-                pdk.Layer("LineLayer", data=df_full,
-                    get_source_position="[lon, lat]",
-                    get_target_position="[lon, lat]",
-                    get_color='[0,0,0,200]', get_width=2),
-                # travelled portion in red
+                # 1) travelled portion in red
                 pdk.Layer("LineLayer", data=df_trav,
                     get_source_position="[lon, lat]",
                     get_target_position="[lon, lat]",
                     get_color='[255,0,0,200]', get_width=6),
-                # start marker in green
+                # 2) start marker (green)
                 pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
                     "lat": full_route[0]["lat"],
                     "lon": full_route[0]["lon"],
-                    "label": "🟢 Start: " + get_location_name(full_route[0]["lat"], full_route[0]["lon"])
+                    "label": "🟢 Start: " + get_location_name(full_route[0]['lat'], full_route[0]['lon'])
                 }]),
-                    get_position='[lon, lat]',
-                    get_color='[0,255,0,220]',
+                    get_position='[lon, lat]', get_color='[0,255,0,220]',
                     get_radius=20000, pickable=True),
-                # end marker in red
+                # 3) end marker (red)
                 pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
                     "lat": full_route[-1]["lat"],
                     "lon": full_route[-1]["lon"],
-                    "label": "🔴 End: " + get_location_name(full_route[-1]["lat"], full_route[-1]["lon"])
+                    "label": "🔴 End: " + get_location_name(full_route[-1]['lat'], full_route[-1]['lon'])
                 }]),
-                    get_position='[lon, lat]',
-                    get_color='[255,0,0,220]',
+                    get_position='[lon, lat]', get_color='[255,0,0,220]',
                     get_radius=20000, pickable=True),
-                # moving marker in blue
+                # 4) moving marker (blue)
                 pdk.Layer("ScatterplotLayer", data=pd.DataFrame([{
                     "lat": pos['lat'],
                     "lon": pos['lon'],
                     "label": "🔵 " + get_location_name(pos['lat'], pos['lon'])
                 }]),
-                    get_position='[lon, lat]',
-                    get_color='[0,0,255,220]',
+                    get_position='[lon, lat]', get_color='[0,0,255,220]',
                     get_radius=20000, pickable=True),
             ]
 
-            # fixed checkpoints (teal)
+            # fixed checkpoints
             if war in additional_movements:
                 layers.append(pdk.Layer("ScatterplotLayer",
                     data=pd.DataFrame(additional_movements[war]),
                     get_position='[lon, lat]',
                     get_color='[0,200,200,180]',
                     get_radius=15000, pickable=True))
+
+            # 5) draw the full route last in bold black
+            layers.append(pdk.Layer("LineLayer", data=pd.DataFrame(full_route),
+                get_source_position="[lon, lat]",
+                get_target_position="[lon, lat]",
+                get_color='[0,0,0,255]', get_width=8))
 
             # render
             center = np.mean([[p['lat'],p['lon']] for p in full_route], axis=0)
@@ -534,11 +516,11 @@ if war:
         # Legend
         st.markdown("""
         <div style="background:#fff;padding:6px;border-radius:4px;display:inline-block;">
-          <span style="color:black;">— Full Route</span>  
           <span style="color:red;">— Travelled</span>  
           <span style="color:green;">🟢 Start</span>  
           <span style="color:red;">🔴 End</span>  
           <span style="color:blue;">🔵 Now</span>  
+          <span style="color:black;">— Full Route</span>  
           <span style="color:teal;">— Checkpoints</span>
         </div>
         """, unsafe_allow_html=True)
