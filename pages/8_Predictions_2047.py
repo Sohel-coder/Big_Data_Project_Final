@@ -8,8 +8,8 @@ st.title("🔮 Predicting the Future of Defence")
 st.markdown(
     """
     This section provides a simple projection of each country’s military power index for 2047,
-    based solely on the 2024 snapshot. Use the controls in the sidebar to explore individual countries
-    and visualize the top N countries by projected strength.
+    based solely on the 2024 snapshot. Use the controls below to select a country and
+    visualize the top N countries by projected strength.
     """
 )
 
@@ -18,24 +18,20 @@ st.markdown(
 def load_current_power():
     """Load the latest (2024) military power index for each country."""
     df = pd.read_csv("data/2024_military_strength_by_country.csv")
-    # Expect columns: 'country', 'pwr_index'
     return df[['country', 'pwr_index']]
 
 current_df = load_current_power()
-
-# --- Flat Projection to 2047 ---
 current_df['pwr_index_2047'] = current_df['pwr_index']
 
 # Prepare comparison DataFrame
 compare_df = current_df.sort_values('pwr_index_2047').reset_index(drop=True)
 
-# --- Sidebar Controls ---
-st.sidebar.header("Options")
-selected_country = st.sidebar.selectbox(
+# --- In-Page Controls ---
+selected_country = st.selectbox(
     "Select a country:",
     options=compare_df['country'].tolist()
 )
-top_n = st.sidebar.number_input(
+top_n = st.number_input(
     "Select top N countries:",
     min_value=1,
     max_value=len(compare_df),
@@ -67,8 +63,8 @@ fig.update_traces(textposition='outside')
 fig.update_layout(yaxis=dict(autorange='reversed'))
 st.plotly_chart(fig, use_container_width=True)
 
-# Optional: Compare current vs projected for Top N
-st.subheader(f"Current vs. Projected for Top {top_n}")
+# --- Compare Current vs. Projected for Top N ---
+st.subheader(f"Current vs Projected Power Index for Top {top_n}")
 fig2 = px.bar(
     top_df,
     x='country',
@@ -83,5 +79,5 @@ st.plotly_chart(fig2, use_container_width=True)
 # --- Insight ---
 st.markdown(
     "**Insight:** With a flat-line projection based solely on the 2024 snapshot, country rankings remain unchanged. "
-    "Interactive selection lets you drill into any country and compare against the top performers."
+    "Selecting a country lets you compare its current and projected indices alongside top performers."
 )
