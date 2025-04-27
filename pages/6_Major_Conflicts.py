@@ -393,7 +393,7 @@ if war:
                     orientation='h',
                     name=country,                   # gives you a legend entry
                     marker_color=colors[i % len(colors)],
-                    width=0.4
+                    width=0.25
                 ))
             
             fig_pers.update_layout(
