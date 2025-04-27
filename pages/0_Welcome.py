@@ -90,14 +90,14 @@ st.markdown(
     }
     /* Stat cards with a subtle texture behind them */
     .stat-card {
-      background-color: rgba(255,255,255,0.5);
       background:url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg') no-repeat center center;
       background-size: cover;
       background-blend-mode: overlay;
       padding: 1.5rem;
       border-radius: 10px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      background-color: rgba(255,255,255,0.15);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .stat-value {
@@ -123,7 +123,8 @@ st.markdown(
       background-size: cover;
       padding: 1.5rem;
       border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      background-color: rgba(255,255,255,0.15);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       border-left: 4px solid var(--accent-color);
       transition: transform 0.3s ease;
     }
