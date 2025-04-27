@@ -45,8 +45,7 @@ year_selected = df["Year"].max()
 st.title("💼 Defense Companies Analysis (2005–2020)")
 
 # Create horizontal tabs
-tab1, tab2, tab3 = st.tabs(["Animations", "Trend", "Details"]
-)
+tab1, tab2, tab3, tab4 = st.tabs(["Animations", "Trend", "Sunburst", "Bubble"])
 
 with tab1:
     st.subheader("🎞️ Animated Top Companies by Defense Revenue (2005–2020)")
@@ -80,7 +79,7 @@ with tab1:
     )
     st.plotly_chart(fig1, use_container_width=True)
 
-    st.subheader(f"🎞️ Animated Total Number of Companies by Country (2005–2020)")
+    st.subheader("🎞️ Animated Total Number of Companies by Country (2005–2020)")
     # Animated bar chart: count of companies per country each year
     company_count = (
         df.groupby(["Year", "Country"])["Company"]
@@ -184,6 +183,10 @@ with tab3:
     )
     st.plotly_chart(fig_sun, use_container_width=True)
 
+    with st.expander("📄 View Raw Data"):
+        st.dataframe(df_year)
+
+with tab4:
     st.subheader("🎥 Animated Bubble Chart: Company Evolution (2005–2020)")
     top_n_bubble = st.slider(
         "Top N Companies per Year (for animation)",
@@ -220,9 +223,10 @@ with tab3:
     fig_bubble.update_layout(margin=dict(t=40, l=0, r=0, b=0))
     st.plotly_chart(fig_bubble, use_container_width=True)
 
-    with st.expander("📄 View Raw Data"):
-        st.dataframe(df_year)
-
 # Footer
-st.markdown("""---  
-🔍 Built with Streamlit & Plotly • Interactive Defense Revenue Insights""")
+st.markdown(
+    """
+    ---  
+    🔍 Built with Streamlit & Plotly • Interactive Defense Revenue Insights
+    """
+)
