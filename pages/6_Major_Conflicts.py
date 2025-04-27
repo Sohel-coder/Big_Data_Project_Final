@@ -524,7 +524,6 @@ if war:
         st.markdown("### 🏁 Outcome")
         for line in info['outcome'].split(';'):
             st.markdown(f"- {line.strip()}")
-        st.write(info['outcome'])
-
+        
 st.markdown("---")
 st.caption("📊 Data Sources: SIPRI, MoD India, Wikipedia, GlobalSecurity.org")
