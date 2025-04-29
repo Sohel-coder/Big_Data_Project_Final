@@ -14,17 +14,14 @@ st.title("Top Military Powers Prediction for 2047")
 st.markdown(
     """
     <style>
-    /* Full-screen war-scene background */
     .stApp {
       background: url('https://t4.ftcdn.net/jpg/03/49/86/71/240_F_349867133_a2Upqgg99LIDvsGbR4Of3a0bXCwqzrAQ.jpg')
                   no-repeat center center fixed;
       background-size: cover;
     }
-    /* Translucent sidebar */
     [data-testid="stSidebar"] {
       background-color: rgba(0, 0, 0, 0.6);
     }
-    /* Centered hero text */
     .css-1lcbmhc {
       text-align: center !important;
       padding: 1rem !important;
@@ -37,12 +34,6 @@ st.markdown(
 # Load data
 @st.cache_data
 def load_data():
-    """
-    Load military strength and defense budget datasets.
-    Expects:
-    - 2024_military_strength_by_country.csv
-    - Defence_budget_cleaned.csv
-    """
     ms = pd.read_csv("data/2024_military_strength_by_country.csv")
     db = pd.read_csv("data/Cleaned_Defence_Budget.csv")
     return ms, db
@@ -50,7 +41,6 @@ def load_data():
 military_strength, defense_budget = load_data()
 
 def create_strength_score(df):
-    """Compute a composite strength score from selected metrics."""
     metrics = [
         'total_national_populations',
         'active_service_military_manpower',
@@ -72,9 +62,7 @@ def create_strength_score(df):
     sdf['pwr_index'] = pd.to_numeric(df_clean['pwr_index'], errors='coerce')
     return sdf.sort_values('strength_score', ascending=False)
 
-
 def analyze_growth_trajectory(strength_df, budget_df):
-    """Estimate budget growth slopes as growth indicators."""
     growth = []
     for c in strength_df['country']:
         subset = budget_df[budget_df['Country Name'] == c]
@@ -88,19 +76,18 @@ def analyze_growth_trajectory(strength_df, budget_df):
             model = LinearRegression().fit(idx, y)
             growth.append(model.coef_[0])
     strength_df['growth_slope'] = growth
-    # normalize
     gs = strength_df['growth_slope']
     strength_df['growth_norm'] = (gs - gs.min())/(gs.max()-gs.min() + 1e-9)
     return strength_df
 
-
 def predict_future(df, target_year=2047):
     years_proj = target_year - 2024
-    # Projected strength = current + growth impact
-    df['projected_strength'] = df['strength_score'] + df['growth_norm'] * (years_proj/5)
-    # Combine with PWR index
+    df['projected_strength'] = df['strength_score'] + df['growth_norm'] * (years_proj / 5)
     df['projection_score'] = df['projected_strength'] - 0.1 * df['pwr_index']
     return df.sort_values('projection_score', ascending=False)
+
+# Select top N
+top_n = st.slider("Select how many top countries to display", min_value=5, max_value=30, value=10)
 
 # Run predictions
 with st.spinner("Calculating predictions..."):
@@ -111,31 +98,37 @@ with st.spinner("Calculating predictions..."):
 # Display current vs predicted
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader("Current Top 10 Military Powers (2024)")
-    cur = strength[['country','strength_score']].head(10).rename(columns={'country':'Country','strength_score':'Strength Score'})
+    st.subheader(f"Current Top {top_n} Military Powers (2024)")
+    cur = strength[['country','strength_score']].head(top_n).rename(columns={'country':'Country','strength_score':'Strength Score'})
     st.table(cur)
 with col2:
-    st.subheader("Predicted Top 10 Military Powers (2047)")
-    pred = future[['country','projection_score']].head(10).rename(columns={'country':'Country','projection_score':'Projection Score'})
+    st.subheader(f"Predicted Top {top_n} Military Powers (2047)")
+    pred = future[['country','projection_score']].head(top_n).rename(columns={'country':'Country','projection_score':'Projection Score'})
     st.table(pred)
 
-# Show some rank changes
-st.subheader("Changes in Rankings (2024 → 2047)")
+# Show rank changes
+st.subheader(f"Changes in Rankings (2024 → 2047)")
+
 cr = {c:i+1 for i,c in enumerate(cur['Country'])}
 pr = {c:i+1 for i,c in enumerate(pred['Country'])}
 changes=[]
 for c in set(list(cr.keys())+list(pr.keys())):
-    changes.append({'Country':c,'2024':cr.get(c,20),'2047':pr.get(c,20)})
+    changes.append({'Country':c,'2024':cr.get(c,top_n+10),'2047':pr.get(c,top_n+10)})
 chg_df = pd.DataFrame(changes)
 
-fig,ax = plt.subplots(figsize=(8,6))
-for _,r in chg_df.iterrows(): ax.plot([1,2],[r['2024'],r['2047']],'-',alpha=0.3)
-ax.scatter([1]*len(chg_df),chg_df['2024'],s=80,label='2024')
-ax.scatter([2]*len(chg_df),chg_df['2047'],s=80,label='2047')
-for _,r in chg_df.iterrows():
-    ax.text(0.8,r['2024'],r['Country'],ha='right')
-    ax.text(2.1,r['2047'],r['Country'],ha='left')
-ax.set_xticks([1,2]);ax.set_xticklabels(['2024','2047']);ax.set_ylim(16,0);ax.set_ylabel('Rank')
-ax.legend();st.pyplot(fig)
+fig, ax = plt.subplots(figsize=(8,6))
+for _, r in chg_df.iterrows():
+    ax.plot([1, 2], [r['2024'], r['2047']], '-', alpha=0.3)
+ax.scatter([1]*len(chg_df), chg_df['2024'], s=80, label='2024')
+ax.scatter([2]*len(chg_df), chg_df['2047'], s=80, label='2047')
+for _, r in chg_df.iterrows():
+    ax.text(0.8, r['2024'], r['Country'], ha='right')
+    ax.text(2.1, r['2047'], r['Country'], ha='left')
+ax.set_xticks([1, 2])
+ax.set_xticklabels(['2024', '2047'])
+ax.set_ylim(top_n + 5, 0)
+ax.set_ylabel('Rank')
+ax.legend()
+st.pyplot(fig)
 
 st.markdown("**Note:** Increased weight to growth slope creates movement in top rankings.")
